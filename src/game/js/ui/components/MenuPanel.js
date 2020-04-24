@@ -31,6 +31,40 @@ GS.UIComponents.MenuPanel.prototype = {
 		return button;
 	},
 
+	addTextField: function(label, text, states, buttonSize) {
+		buttonSize = buttonSize || 0.2;
+
+		var offset = this.getRowOffset();
+		var labelOffset = offset.clone();
+		labelOffset.x += this.size.x * 0.5 - 10;
+		labelOffset.y += this.rowHeight * 0.5;
+
+		var label = new GS.UIComponents.MenuLabel(this.cvs, label, labelOffset, this.pos);
+		label.fontSize = this.fontSize;
+		label.textAlign = "right";
+
+		this.children.push(label);
+
+		var buttonOffset = offset.clone();
+		var buttonSize = new THREE.Vector2(this.size.x * buttonSize, this.rowHeight);
+		buttonOffset.x += this.size.x * 0.5 + 10;
+
+		states = states || ["on", "off"];
+		var button = new GS.UIComponents.MenuButton(this.cvs, ['enter'], buttonOffset, this.pos, buttonSize, () => {}, states);
+    button.onClick = () => {
+        GS.KeybindSettings.textinput.modifyText(button);
+    };
+		button.fontSize = this.fontSize;
+
+		this.children.push(button);
+
+		this.rowOffset += this.rowHeight;
+
+		return {
+			label: label,
+			button: button,
+		};
+	},
 	addToggleButton: function(text, states, buttonSize, onClick) {
 		buttonSize = buttonSize || 0.2;
 
@@ -93,7 +127,6 @@ GS.UIComponents.MenuPanel.prototype = {
 			label2: label2,
 		};
 	},
-
 	addNumberPicker: function(text, value, min, max, step, onChange) {
 		var offset = this.getRowOffset();
 		var labelOffset = offset.clone();

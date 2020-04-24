@@ -12,22 +12,24 @@ The steps to build it are:
 - Download the repository
 - Download the assets zip from [here](https://github.com/gorescript/gorescript/releases/download/v1.1/assets.zip)
 - Unpack the assets to the \src\game folder (so the \src\game folder should now contain an \assets folder)
-- Install Node.js
+- Install [NVM](https://github.com/nvm-sh/nvm#installing-and-updating)
 - Open a command line window, go to the root folder of the repository
 - Run the commands:
 
+```
+        nvm install 8.6
+        nvm use 8.6
         npm install gulp -g
         npm install
         gulp web-debug
-
+```
 - When it says "finished js-client" hit CTRL+C and terminate it
 - Go to the newly created \dist folder (in the root of the repository)
 - Run the commands:
-
-        npm install http-server -g
-        http-server
-
-http://localhost:8080 should now contain a playable version of the game.
+```
+        npm run server
+```
+[http://localhost:3030](http://localhost:3030) should now contain a playable version of the game.
 
 Custom maps
 -----------

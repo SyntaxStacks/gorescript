@@ -6,6 +6,8 @@ var insert = require("gulp-insert");
 
 gulp.task("js-vendor", function () {
 	return gulp.src([
+			"./src/deps/socketiop2p.min.js",
+			"./src/deps/socket.io.js",
 			"./src/deps/jquery.min.js",
 			"./src/deps/lodash.min.js",
 			"./src/deps/jszip.min.js",

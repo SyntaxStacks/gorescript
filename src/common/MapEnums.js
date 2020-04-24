@@ -15,7 +15,7 @@ GS.SegmentTypes = {
 };
 
 GS.MapEntities = {
-	"M": { 
+	"M": {
 		name: "medkit",
 		type: "Item",
 	},
@@ -48,4 +48,8 @@ GS.MapEntities = {
 			attack: 2,
 		},
 	},
+  "S": {
+		name: "spawn",
+		type: "Spawn",
+  }
 };

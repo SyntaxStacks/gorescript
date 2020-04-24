@@ -41,6 +41,8 @@ GS.Settings = function() {
 		mouseInvertY: false,
 
 		keybinds: null,
+
+    roomName: ''
 	};
 
 	return {
@@ -361,5 +363,14 @@ GS.Settings = function() {
 		get mouseInvertY() {
 			return settings.mouseInvertY;
 		},
+
+    get roomName() {
+      return settings.roomName;
+    },
+
+    set roomName(value) {
+      settings.roomName = value;
+      this.saveSettings();
+    }
 	}
 }();

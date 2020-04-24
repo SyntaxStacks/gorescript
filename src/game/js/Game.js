@@ -288,6 +288,24 @@ GS.Game.prototype = GS.inherit(GS.Base, {
 		this.nextState = GS.GameStates.Dispose;
 	},
 
+	join: function() {
+		if (this.uiManager.menuActive) {
+			this.closeMenu();
+		}
+
+		// @if TARGET='WEB'
+		if (this.isTestMap()) {
+			this.mapName = "testMap";
+		} else {
+		// @endif
+			this.mapName = "airstrip1";
+		// @if TARGET='WEB'
+		}
+		// @endif
+
+		this.nextState = GS.GameStates.Dispose;
+	},
+
 	isTestMap: function() {
 		return window.location.search.toLowerCase().indexOf("testmap") > -1;
 	},

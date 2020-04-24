@@ -49,6 +49,9 @@ GS.KeybindSettings = {
 	],
 
 	init: function() {
+		this.textinput = new GS.TextInput();
+		this.textinput.init();
+
 		this.rebound = new GS.Rebound(GS.KeybindSettings.keybinds);
 		this.rebound.init();
 

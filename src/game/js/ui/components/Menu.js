@@ -38,6 +38,7 @@ GS.UIComponents.Menu.prototype = {
 	init: function() {
 		this.initTopPanel();
 		this.initOptionsPanel();
+		this.initOnlinePanel();
 		this.initGraphicsPanel();
 		this.initSoundPanel();
 		this.initGameplayPanel();
@@ -64,6 +65,18 @@ GS.UIComponents.Menu.prototype = {
 
 		this.btnNewGame = this.topPanel.addButton("new game");
 		this.btnNewGame.onClick = function() { GAME.newGame(); };
+
+		this.btnMPGame = this.topPanel.addButton("online game");
+		this.btnMPGame.onClick = function() {
+      that.layoutOnlinePanel();
+      GS.Socket.getRoomsCb = (rooms) => {
+        that.layoutOnlinePanel(rooms);
+        that.activePanel = that.onlinePanel;
+      };
+      GS.Socket.init();
+      GS.Socket.getRooms();
+      that.activePanel = that.onlinePanel;
+    };
 
 		this.btnSteamPage = this.topPanel.addButton("steam page");
 		this.btnSteamPage.onClick = function() {
@@ -135,6 +148,76 @@ GS.UIComponents.Menu.prototype = {
 
 		this.btnOptionsBack = this.optionsPanel.addButton("back");
 		this.btnOptionsBack.onClick = function() { that.activePanel = that.topPanel; };
+	},
+
+	layoutOnlinePanel: function(rooms) {
+		var that = this;
+
+    let backOnClick = function() {
+      that.activePanel = that.topPanel;
+      GS.Socket.close();
+    };
+		this.onlinePanel = new GS.UIComponents.MenuPanel(this.cvs, new THREE.Vector2(-400, -160),
+			new THREE.Vector2(0.5, 0.5), new THREE.Vector2(800, 520), 60, 65);
+    if (rooms === undefined) {
+        this.lblLoading = this.onlinePanel.addDoubleLabel("loading Rooms", "");
+        this.btnonlineBack = this.onlinePanel.addButton("back");
+        this.btnonlineBack.onClick = backOnClick();
+    } else {
+      if (rooms && rooms.length) {
+        this.lblRooms = this.onlinePanel.addDoubleLabel("Rooms", "");
+        for (i in rooms) {
+          this['btnGraphics' + i] = this.onlinePanel.addDoubleLabel(rooms[i], "");
+        }
+      } else {
+        this.lblRooms = this.onlinePanel.addDoubleLabel("No Rooms Found", "");
+      }
+
+      this.onlinePanel.addEmptyRow();
+
+      this.btnOnlineRoomName = this.onlinePanel.addTextField("Name", "enter", [""]);
+
+      this.btnOnlineStart = this.onlinePanel.addButton("join");
+      this.btnOnlineStart.onClick = () => {
+        GS.Socket.joinRoom(that.btnOnlineRoomName.button.text);
+      };
+
+      this.btnonlineBack = this.onlinePanel.addButton("back");
+      this.btnonlineBack.onClick = backOnClick;
+
+      GS.KeybindSettings.textinput.onModifyingTextStart = (e) => {
+        let button = this.btnOnlineRoomName.button;
+        button._onclick = button.onClick;
+        button.onClick = () => {};
+        button.text = "";
+        button.states = [""];
+        this.btnOnlineRoomName.currentStateIndex = 0;
+      };
+
+      GS.KeybindSettings.textinput.onModifyingTextStop = function(e) {
+        let button = that.btnOnlineRoomName.button;
+        buttonText = button.text || "";
+        button.states = [buttonText];
+        button.currentStateIndex = 0;
+
+        GS.Settings.roomName = buttonText;
+
+        if (e.success) {
+          var onClickEventHandler = button.onClick;
+          button.onClick = function() {};
+
+          setTimeout(function() {
+            button.onClick = button._onclick;
+          }, 100);
+
+          GS.Settings.saveSettings();
+        }
+      };
+    }
+	},
+
+	initOnlinePanel: function() {
+    this.layoutOnlinePanel();
 	},
 
 	initGraphicsPanel: function() {
