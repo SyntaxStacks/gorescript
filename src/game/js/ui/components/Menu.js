@@ -69,13 +69,12 @@ GS.UIComponents.Menu.prototype = {
 		this.btnMPGame = this.topPanel.addButton("online game");
 		this.btnMPGame.onClick = function() {
       that.layoutOnlinePanel();
-      GS.Socket.getRoomsCb = (rooms) => {
+      that.activePanel = that.onlinePanel;
+      let getRoomsCb = (rooms) => {
         that.layoutOnlinePanel(rooms);
         that.activePanel = that.onlinePanel;
       };
-      GS.Socket.init();
-      GS.Socket.getRooms();
-      that.activePanel = that.onlinePanel;
+      GS.OnlineManager.start(cb)
     };
 
 		this.btnSteamPage = this.topPanel.addButton("steam page");
@@ -155,7 +154,7 @@ GS.UIComponents.Menu.prototype = {
 
     let backOnClick = function() {
       that.activePanel = that.topPanel;
-      GS.Socket.close();
+      GS.OnlineManager.stop();
     };
 		this.onlinePanel = new GS.UIComponents.MenuPanel(this.cvs, new THREE.Vector2(-400, -160),
 			new THREE.Vector2(0.5, 0.5), new THREE.Vector2(800, 520), 60, 65);
@@ -164,10 +163,11 @@ GS.UIComponents.Menu.prototype = {
         this.btnonlineBack = this.onlinePanel.addButton("back");
         this.btnonlineBack.onClick = backOnClick();
     } else {
-      if (rooms && rooms.length) {
+      let roomNames = rooms || [];
+      if (roomNames.length) {
         this.lblRooms = this.onlinePanel.addDoubleLabel("Rooms", "");
-        for (i in rooms) {
-          this['btnGraphics' + i] = this.onlinePanel.addDoubleLabel(rooms[i], "");
+        for (i in roomNames) {
+          this['btnGraphics' + i] = this.onlinePanel.addDoubleLabel(roomNames[i], "");
         }
       } else {
         this.lblRooms = this.onlinePanel.addDoubleLabel("No Rooms Found", "");
@@ -179,7 +179,10 @@ GS.UIComponents.Menu.prototype = {
 
       this.btnOnlineStart = this.onlinePanel.addButton("join");
       this.btnOnlineStart.onClick = () => {
-        GS.Socket.joinRoom(that.btnOnlineRoomName.button.text);
+        GS.Game.onlinePlay = true;
+        GS.OnlineManager.joinRoom(that.btnOnlineRoomName.button.text);
+        // TODO open level after prompted from server
+        // GAME.loadOnlineLevel("airstrip1online")
       };
 
       this.btnonlineBack = this.onlinePanel.addButton("back");
@@ -187,15 +190,17 @@ GS.UIComponents.Menu.prototype = {
 
       GS.KeybindSettings.textinput.onModifyingTextStart = (e) => {
         let button = this.btnOnlineRoomName.button;
-        button._onclick = button.onClick;
-        button.onClick = () => {};
+        let joinButton = this.btnOnlineStart;
+        button.disabled = true;
+        joinButton.disabled = true;
         button.text = "";
         button.states = [""];
-        this.btnOnlineRoomName.currentStateIndex = 0;
+        button.currentStateIndex = 0;
       };
 
       GS.KeybindSettings.textinput.onModifyingTextStop = function(e) {
         let button = that.btnOnlineRoomName.button;
+        let button = that.btnOnlineStart;
         buttonText = button.text || "";
         button.states = [buttonText];
         button.currentStateIndex = 0;
@@ -203,12 +208,8 @@ GS.UIComponents.Menu.prototype = {
         GS.Settings.roomName = buttonText;
 
         if (e.success) {
-          var onClickEventHandler = button.onClick;
-          button.onClick = function() {};
-
-          setTimeout(function() {
-            button.onClick = button._onclick;
-          }, 100);
+          button.disabled = false;
+          joinButton.disabled = false;
 
           GS.Settings.saveSettings();
         }

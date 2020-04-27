@@ -51,5 +51,14 @@ GS.MapEntities = {
   "S": {
 		name: "spawn",
 		type: "Spawn",
+  },
+  "O": {
+    name: "online_player",
+    type: "OnlinePlayer",
+		animations: {
+			walk: 6,
+			death: 4,
+		},
   }
+
 };

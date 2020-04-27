@@ -32,6 +32,9 @@ GS.Grid.prototype = {
 		this.aiManager = new GS.AIManager(this);
 		this.aiManager.init();
 
+		this.onlineManager = new GS.OnlineManager(this);
+		this.onlineManager.init();
+
 		this.addConcreteMeshesToScene();
 		this.addEntityMeshesToScene();
 
@@ -55,6 +58,7 @@ GS.Grid.prototype = {
 		this.particleView.update();
 		this.lightingView.update();
 		this.aiManager.update();
+		this.onlineManager.update();
 
 		this.totalSphereTriangleChecks = 0;
 		this.totalBoxSectorChecks = 0;
@@ -127,6 +131,10 @@ GS.Grid.prototype = {
 		// }
 	},
 
+  addEntityMeshToScene: function (gridObject) {
+    that.entityMeshes.children.push(gridObject.view.mesh);
+  },
+
 	addDebugLine: function(pos0, pos1, color) {
 		color = (color !== undefined) ? color: 0xffffff;
 
@@ -142,7 +150,7 @@ GS.Grid.prototype = {
 		var height = 2;
 		var color = new THREE.Color().setRGB(0, 0, 0.5).getHex();
 
-		var geometry = new THREE.PlaneGeometry(this.width * this.cellSize, this.height * this.cellSize, this.width, this.height);		
+		var geometry = new THREE.PlaneGeometry(this.width * this.cellSize, this.height * this.cellSize, this.width, this.height);
 		var material = new THREE.MeshBasicMaterial({ color: color, wireframe: true });
 		var mesh = new THREE.Mesh(geometry, material);
 		mesh.rotation.x = -Math.PI / 2;

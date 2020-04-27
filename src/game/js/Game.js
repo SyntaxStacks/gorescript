@@ -43,6 +43,7 @@ GS.Game.prototype = GS.inherit(GS.Base, {
 		this.updated = false;
 		this.firstLoad = true;
 		this.firstPlay = true;
+		this.onlinePlay = false;
 		this.mapWon = false;
 		this.restartedLevel = false;
 
@@ -130,70 +131,92 @@ GS.Game.prototype = GS.inherit(GS.Base, {
 	},
 
 	postLoad: function() {
-		if (this.firstLoad) {
-			this.loadingUI.spinnerOnly = true;
-			this.uiManager.initComponents(this.assetLoader.assets);
-			this.openMenu();
-			this.firstLoad = false;
+    if (this.onlinePlay) {
+        this.initComponents(this.assetLoader.assets);
+        this.uiManager.initComponents(this.assetLoader.assets, this.grid);
+        this.uiManager.useIngameMenu();
+        // TODO add useOnlineMenu
 
-			if (this.noMenu) {
-				this.newGame();
-			}
-		} else {
-			this.initComponents(this.assetLoader.assets);
-			this.uiManager.initComponents(this.assetLoader.assets, this.grid);
-			this.uiManager.useIngameMenu();
+        this.nextState = GS.GameStates.Play;
+        this.graphicsManager.monochromeEnabled = false;
 
-			this.nextState = GS.GameStates.Play;
-			this.graphicsManager.monochromeEnabled = false;
+        if (this.grid.aiManager.script !== undefined && !this.restartedLevel) {
+          this.musicManager.playTrack(this.grid.aiManager.script.musicTrack);
+        }
+        this.restartedLevel = false;
 
-			if (this.grid.aiManager.script !== undefined && !this.restartedLevel) {
-				this.musicManager.playTrack(this.grid.aiManager.script.musicTrack);
-			}
-			this.restartedLevel = false;
+    } else {
+      if (this.firstLoad) {
+        this.loadingUI.spinnerOnly = true;
+        this.uiManager.initComponents(this.assetLoader.assets);
+        this.openMenu();
+        this.firstLoad = false;
 
-			if (this.firstPlay) {
-				this.firstPlay = false;
-			}
-		}
+        if (this.noMenu) {
+          this.newGame();
+        }
+      } else {
+        this.initComponents(this.assetLoader.assets);
+        this.uiManager.initComponents(this.assetLoader.assets, this.grid);
+        this.uiManager.useIngameMenu();
+        // TODO add useOnlineMenu
+
+        this.nextState = GS.GameStates.Play;
+        this.graphicsManager.monochromeEnabled = false;
+
+        if (this.grid.aiManager.script !== undefined && !this.restartedLevel) {
+          this.musicManager.playTrack(this.grid.aiManager.script.musicTrack);
+        }
+        this.restartedLevel = false;
+
+      }
+      if (this.firstPlay) {
+        this.firstPlay = false;
+      }
+    }
 	},
 
 	play: function() {
-		GS.InputHelper.checkPressedKeys();
+    GS.InputHelper.checkPressedKeys();
+    if (this.onlinePlay) {
+        this.grid.update();
+        TWEEN.update();
+    } else {
 
-		if (!GS.InputHelper.keysPressed && GS.InputHelper.isKeyDown(this.keys.Escape)) {
-			this.openMenu();
-		}
+      if (!GS.InputHelper.keysPressed && GS.InputHelper.isKeyDown(this.keys.Escape)) {
+        this.openMenu();
+      }
 
-		if (!this.grid.aiManager.mapWon && !GS.InputHelper.keysPressed && GS.InputHelper.isKeyDown(this.keys.Tab)) {
-			this.uiManager.automap.visible = !this.uiManager.automap.visible;
-			this.uiManager.overrideRedraw = true;
-			this.graphicsManager.monochromeEnabled = this.uiManager.automap.visible;
-		}
+      if (!this.grid.aiManager.mapWon && !GS.InputHelper.keysPressed && GS.InputHelper.isKeyDown(this.keys.Tab)) {
+        this.uiManager.automap.visible = !this.uiManager.automap.visible;
+        this.uiManager.overrideRedraw = true;
+        this.graphicsManager.monochromeEnabled = this.uiManager.automap.visible;
+      }
 
-		if (this.grid.player.dead && !GS.InputHelper.keysPressed && GS.InputHelper.isKeyDown(this.keys.Enter)) {
-			this.restartLevel();
-		}
+      if (this.grid.player.dead && !GS.InputHelper.keysPressed && GS.InputHelper.isKeyDown(this.keys.Enter)) {
+        this.restartLevel();
+      }
 
-		if (this.grid.aiManager.mapWon && !GS.InputHelper.keysPressed && GS.InputHelper.isKeyDown(this.keys.Enter)) {
-			if (this.grid.aiManager.script.nextMap !== undefined) {
-				this.playerPersistencePackage = this.grid.player.getPersistencePackage();
-				this.loadLevel(this.grid.aiManager.script.nextMap);
-			}
-		}
+      if (this.grid.aiManager.mapWon && !GS.InputHelper.keysPressed && GS.InputHelper.isKeyDown(this.keys.Enter)) {
+        if (this.grid.aiManager.script.nextMap !== undefined) {
+          this.playerPersistencePackage = this.grid.player.getPersistencePackage();
+          this.loadLevel(this.grid.aiManager.script.nextMap);
+        }
+      }
 
-		if (!this.mapWon && this.grid.aiManager.mapWon) {
-			this.mapWon = true;
-			this.onMapWon();
-		}
+      if (!this.mapWon && this.grid.aiManager.mapWon) {
+        this.mapWon = true;
+        this.onMapWon();
+      }
 
-		if (!this.grid.aiManager.mapWon) {
-			this.grid.update();
-			TWEEN.update();
-		}
-		GS.DebugUI.update();
+      if (!this.grid.aiManager.mapWon) {
+        this.grid.update();
+        TWEEN.update();
+      }
+    }
+    GS.DebugUI.update();
 
-		this.uiManager.update();
+    this.uiManager.update();
 	},
 
 	onMapWon: function() {
@@ -262,6 +285,17 @@ GS.Game.prototype = GS.inherit(GS.Base, {
 	},
 
 	loadLevel: function(name) {
+    this.onlinePlay = false;
+		if (this.uiManager.menuActive) {
+			this.closeMenu();
+		}
+
+		this.mapName = name;
+		this.nextState = GS.GameStates.Dispose;
+	},
+
+	loadOnlineLevel: function(name) {
+    this.onlinePlay = true;
 		if (this.uiManager.menuActive) {
 			this.closeMenu();
 		}
@@ -271,6 +305,7 @@ GS.Game.prototype = GS.inherit(GS.Base, {
 	},
 
 	newGame: function() {
+    this.onlinePlay = false;
 		if (this.uiManager.menuActive) {
 			this.closeMenu();
 		}

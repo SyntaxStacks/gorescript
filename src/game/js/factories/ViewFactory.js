@@ -61,7 +61,7 @@ GS.ViewFactory.prototype = {
 
 	getSkyboxMesh: function() {
 		var name = "skybox1";
-		
+
 		var tex = this.cubeTextures[name];
 		tex.format = THREE.RGBFormat;
 
@@ -116,7 +116,7 @@ GS.ViewFactory.prototype = {
 		geometry.computeVertexNormals();
 
 		gridObject.region.mesh.geometry.merge(geometry);
-	
+
 		gridObject.view.collisionData.triangles = this.getSegmentTriangles(seg);
 		this.applyConcreteBoundingBox(gridObject, triangles);
 
@@ -177,7 +177,7 @@ GS.ViewFactory.prototype = {
 		GS.pushArray(sectorTriangles, this.getSectorTriangles(sector, ceiling, true));
 
 		var emissive = this.getEmissiveColor(sector.lightLevel);
-		var color = new THREE.Color(ceiling ? sector.ceilingCatColor : sector.lightColor);		
+		var color = new THREE.Color(ceiling ? sector.ceilingCatColor : sector.lightColor);
 
 		for (var j = 0; j < triangles.length; j += 3) {
 			var face = new THREE.Face3(j, j + 1, j + 2, null, color);
@@ -260,7 +260,7 @@ GS.ViewFactory.prototype = {
 			var ntt = gridObject.sourceObj;
 			var desc = GS.MapEntities[ntt.type];
 			var name = GS.MapEntities[ntt.type].name;
-			
+
 			var offset = gridObject.offset;
 			var scale = gridObject.scale;
 			var size = gridObject.size;
@@ -268,9 +268,19 @@ GS.ViewFactory.prototype = {
 			var material = this.materials[name].clone();
 
 			var mesh;
+			if (name === "spawn") {
+				mesh = new THREE.Object3D();
+        mesh.position.copy(offset);
+        mesh.position.copy(gridObject.position);
+        mesh.scale.copy(scale);
+
+        gridObject.view.mesh = mesh;
+        gridObject.view.debugMesh = this.getDebugMesh(gridObject.position);
+          return; // No Draw
+      }
 			if (desc.animations === undefined) {
 				mesh = this.meshes[name].clone();
-				mesh.material = material;				
+				mesh.material = material;
 			} else {
 				mesh = new THREE.Object3D();
 				var data = mesh.userData;
@@ -297,7 +307,8 @@ GS.ViewFactory.prototype = {
 			gridObject.view.mesh = mesh;
 			gridObject.view.debugMesh = this.getDebugMesh(gridObject.position);
 
-			if (gridObject instanceof GS.Monster) {
+			if (gridObject instanceof GS.Monster||
+          gridObject instanceof GS.OnlinePlayer) {
 				gridObject.view.collisionData.triangles = [];
 				for (var i = 0; i < vertices.length; i++) {
 					var v = vertices[i].clone();
@@ -355,7 +366,7 @@ GS.ViewFactory.prototype = {
 			centerMaterial = this.materials[door.sector.ceilTexId].clone();
 			sideMaterial = this.materials[door.sector.sideTexId].clone();
 		}
-		
+
 		var mesh = new THREE.Object3D();
 		mesh.children.push(this.getMovingSectorCenterMesh(door, triangles, centerMaterial));
 		mesh.children.push(this.getMovingSectorSideMesh(door, triangles, sideMaterial));
@@ -387,11 +398,11 @@ GS.ViewFactory.prototype = {
 			centerMaterial = this.materials[elevator.sector.floorTexId].clone();
 			sideMaterial = this.materials[elevator.sector.sideTexId].clone();
 		}
-		
+
 		var mesh = new THREE.Object3D();
-		mesh.children.push(this.getMovingSectorCenterMesh(elevator, triangles, 
+		mesh.children.push(this.getMovingSectorCenterMesh(elevator, triangles,
 			centerMaterial, true));
-		mesh.children.push(this.getMovingSectorSideMesh(elevator, triangles, 
+		mesh.children.push(this.getMovingSectorSideMesh(elevator, triangles,
 			sideMaterial, true));
 
 		mesh.children[0].position.copy(elevator.position);
@@ -429,7 +440,7 @@ GS.ViewFactory.prototype = {
 		if (elevator !== true) {
 			bottomY = movingSector.sector.floorTopY;
 			topY = movingSector.sector.ceilBottomY;
-		} else {			
+		} else {
 			bottomY = movingSector.sector.floorTopY - movingSector.sector.elevatorMaxHeight;
 			topY = movingSector.sector.floorTopY;
 		}
@@ -471,7 +482,7 @@ GS.ViewFactory.prototype = {
 				vertices[j].sub(movingSector.position);
 			}
 
-			GS.pushArray(geometry.vertices, vertices);			
+			GS.pushArray(geometry.vertices, vertices);
 
 			if (!movingSector.sector.useVertexColors) {
 				geometry.faces.push(new THREE.Face3(k, k + 1, k + 2));
@@ -540,7 +551,7 @@ GS.ViewFactory.prototype = {
 				v0 = new THREE.Vector3(v[idx[i]].x, minHeight, v[idx[i]].y);
 				v1 = new THREE.Vector3(v[idx[i + 1]].x, minHeight, v[idx[i + 1]].y);
 				v2 = new THREE.Vector3(v[idx[i + 2]].x, minHeight, v[idx[i + 2]].y);
-			}			
+			}
 
 			if (!movingSector.sector.useVertexColors) {
 				geometry.faces.push(new THREE.Face3(i, i + 1, i + 2));
@@ -602,7 +613,7 @@ GS.ViewFactory.prototype = {
 	applyTVScreenView: function(tvScreen) {
 		tvScreen.view.mesh = this.getTVScreenMesh(tvScreen);
 
-		tvScreen.view.mesh.material = new THREE.MeshBasicMaterial({ 
+		tvScreen.view.mesh.material = new THREE.MeshBasicMaterial({
 			map: this.textures[tvScreen.segment.texId],
 			depthWrite: false,
 			polygonOffset: true,
@@ -624,7 +635,7 @@ GS.ViewFactory.prototype = {
 		switchObj.view.textureOn = this.textures.switch_on;
 		switchObj.view.textureOff = this.textures.switch_off;
 
-		switchObj.view.mesh.material = new THREE.MeshBasicMaterial({ 
+		switchObj.view.mesh.material = new THREE.MeshBasicMaterial({
 			map: switchObj.view.textureOff,
 			depthWrite: false,
 			polygonOffset: true,
@@ -669,7 +680,7 @@ GS.ViewFactory.prototype = {
 		for (var i = 0; i < weapons.length; i++) {
 			var name = weapons[i];
 			if (this.meshes[name] !== undefined) {
-				var material = this.materials[name].clone();				
+				var material = this.materials[name].clone();
 				var mesh = this.meshes[name].clone();
 				mesh.material = material;
 				playerView.addWeaponMesh(name, mesh);
@@ -678,14 +689,14 @@ GS.ViewFactory.prototype = {
 		playerView.init();
 
 		return playerView;
-	},	
+	},
 
 	getDebugMesh: function(position) {
 		var debugGeometry = new THREE.BoxGeometry(1, 1, 1);
-		var debugMesh = new THREE.Mesh(debugGeometry, this.debugBoundingBoxMaterial);		
+		var debugMesh = new THREE.Mesh(debugGeometry, this.debugBoundingBoxMaterial);
 		debugMesh.position.copy(position);
 		return debugMesh;
-	},	
+	},
 
 	getDebugTriangleMesh: function(triangles) {
 		var debugGeometry = new THREE.Geometry();
@@ -693,7 +704,7 @@ GS.ViewFactory.prototype = {
 
 		for (var i = 0; i < triangles.length; i += 3) {
 			debugGeometry.faces.push(new THREE.Face3(i, i + 1, i + 2));
-		}		
+		}
 
 		var debugMesh = new THREE.Mesh(debugGeometry, this.debugTriangleMaterial);
 		debugMesh.userData.isTriangleMesh = true;
