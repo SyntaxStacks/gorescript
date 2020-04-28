@@ -8,10 +8,10 @@ GS.OnlinePlayerStates = {
 GS.OnlinePlayer = function(grid, layer, sourceObj) {
 	GS.GridObject.apply(this, arguments);
 
-  this.socketId = socketid;
 	this.monsterType = "nom";
 	$.extend(true, this, GS.Monsters[this.monsterType]);
 
+  this.id = sourceObj.id;
 	this.xAngle = THREE.Math.degToRad(360 - sourceObj.rotation);
 	this.direction = new THREE.Vector3();
 
@@ -27,7 +27,7 @@ GS.OnlinePlayer = function(grid, layer, sourceObj) {
 	this.dead = false;
 	this.health = this.maxHealth;
 	this.scatterCooldown = 0;
-	this.state = GS.OnlinePlayerStates.Inactive;
+	this.state = GS.OnlinePlayerStates.Active;
 	this.moving = false;
 	this.inPain = false;
 
@@ -45,7 +45,7 @@ GS.OnlinePlayer.prototype = GS.inherit(GS.GridObject, {
 	init: function() {
 		this.animationView = new GS.AnimationView(this);
 		this.animationView.init();
-		this.animationView.setLoop("active");
+		this.animationView.setLoop("walk");
 
 		this.updateBoundingBox();
 		this.updateMesh();
@@ -58,18 +58,20 @@ GS.OnlinePlayer.prototype = GS.inherit(GS.GridObject, {
 		this.animationView.update();
 
 		if (!this.dead) {
-			if (this.state === GS.OnlinePlayerStates.Awake) {
+      this.updateMove();
+    }
+
+			// if (this.state === GS.OnlinePlayerStates.Awake) {
 				// this.updateScan();
-			} else if (this.state === GS.OnlinePlayerStates.Active) {
-				this.updateMove();
+			// } else if (this.state === GS.OnlinePlayerStates.Active) {
 		// 		if (this.attackType === GS.OnlinePlayerAttackTypes.Melee) {
 		// 			this.updateAttackMelee();
 		// 		} else
 		// 		if (this.attackType === GS.OnlinePlayerAttackTypes.Ranged) {
 		// 			this.updateAttackRanged();
 		// 		}
-			}
-		}
+			// }
+		// }
 
 		this.updateLightLevel();
 	},
@@ -100,13 +102,41 @@ GS.OnlinePlayer.prototype = GS.inherit(GS.GridObject, {
 	// 	this.updateMesh();
 	// },
 
-	onUpdateMove: function() {
+  updateMove: function () {
+			if (this.inPain) {
+				this.updateMesh();
+			}
+      // this.move();
+			// this.calculateDirection(target.position);
+			this.calculateRotation();
+  },
+	onUpdateMove: function(updateClient) {
+    this.position.set(updatedClient.x, updatedClient.y, updatedClient.z);
+    let direction = updatedClient.direction;
+    this.direction.set(direction.x, direction.y, direction.z);
     this.move();
-
     // this.calculateDirection(target.position);
-    this.calculateRotation();
-    this.updateMesh();
+    // this.calculateRotation();
+    // this.updateMesh();
 	},
+
+	onPlayerShoot: function() {
+		var direction = new THREE.Vector3();
+
+		return function() {
+			// this.moving = false;
+			// var target = this.grid.player;
+
+			// this.chargingUpRangedAttack = false;
+			// this.animationView.setLoop("walk");
+
+			// this.rangedAttackCooldown = this.rangedAttackMaxCooldown +
+				// Math.floor(Math.random() * this.rangedAttackCooldownRandomModifier);
+
+			// direction.copy(this.position).sub(this.position).normalize();
+			this.grid.addProjectile(this, "pistol_bolt", this.position.clone(), this.direction.clone());
+		}
+	}(),
 
 	move: function() {
 		var newPos = new THREE.Vector3();
@@ -180,7 +210,7 @@ GS.OnlinePlayer.prototype = GS.inherit(GS.GridObject, {
 			this.updateMesh();
 
 			if (currentSpeed / this.speed < 0.1) {
-				this.scatter();
+				// this.scatter();
 			}
 
 			this.sector = this.getSector();
@@ -226,6 +256,9 @@ GS.OnlinePlayer.prototype = GS.inherit(GS.GridObject, {
 	},
 
 	onDeath: function() {
+    if (this.dead) {
+      return;
+    }
 		this.moving = false;
 
 		// var target = this.grid.player;
@@ -234,14 +267,14 @@ GS.OnlinePlayer.prototype = GS.inherit(GS.GridObject, {
 
 		this.dead = true;
 		this.grid.soundManager.playSound(this.deathSound);
-		this.grid.OnlineManager.onOnlinePlayerDeath(this.playerInfo);
+		GAME.onlineManager.onOnlinePlayerDeath(this.playerInfo);
 		this.animationView.setLoop("death");
 		this.updateMesh();
 	},
 
   playerInfo: function () {
     return {
-      id: this.socketId,
+      id: this.id,
       x: this.position.x,
       y: this.position.y,
       z: this.position.z,

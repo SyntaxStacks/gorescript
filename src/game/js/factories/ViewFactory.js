@@ -38,6 +38,17 @@ GS.ViewFactory.prototype = {
 		}
 
 		var entities = this.map.layerObjects[GS.MapLayers.Entity];
+    // HACK: force online_player into entities
+    // TODO: check to see if is online map and add material if true
+    let onlineNtt = {
+      id: 24,
+      pos: new THREE.Vector2(-100, -100),
+      type: "O",
+      y:-100,
+      isStatic: false,
+      rotation:0
+    };
+    entities.push(onlineNtt);
 		var entityMaterials = {};
 		for (var i = 0; i < entities.length; i++) {
 			var ntt = entities[i];
@@ -307,7 +318,7 @@ GS.ViewFactory.prototype = {
 			gridObject.view.mesh = mesh;
 			gridObject.view.debugMesh = this.getDebugMesh(gridObject.position);
 
-			if (gridObject instanceof GS.Monster||
+			if (gridObject instanceof GS.Monster ||
           gridObject instanceof GS.OnlinePlayer) {
 				gridObject.view.collisionData.triangles = [];
 				for (var i = 0; i < vertices.length; i++) {

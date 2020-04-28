@@ -74,7 +74,7 @@ GS.UIComponents.Menu.prototype = {
         that.layoutOnlinePanel(rooms);
         that.activePanel = that.onlinePanel;
       };
-      GS.OnlineManager.start(cb)
+      GAME.onlineManager.start(getRoomsCb)
     };
 
 		this.btnSteamPage = this.topPanel.addButton("steam page");
@@ -154,14 +154,14 @@ GS.UIComponents.Menu.prototype = {
 
     let backOnClick = function() {
       that.activePanel = that.topPanel;
-      GS.OnlineManager.stop();
+      GAME.onlineManager.stop();
     };
 		this.onlinePanel = new GS.UIComponents.MenuPanel(this.cvs, new THREE.Vector2(-400, -160),
 			new THREE.Vector2(0.5, 0.5), new THREE.Vector2(800, 520), 60, 65);
     if (rooms === undefined) {
         this.lblLoading = this.onlinePanel.addDoubleLabel("loading Rooms", "");
         this.btnonlineBack = this.onlinePanel.addButton("back");
-        this.btnonlineBack.onClick = backOnClick();
+        this.btnonlineBack.onClick = backOnClick;
     } else {
       let roomNames = rooms || [];
       if (roomNames.length) {
@@ -180,7 +180,7 @@ GS.UIComponents.Menu.prototype = {
       this.btnOnlineStart = this.onlinePanel.addButton("join");
       this.btnOnlineStart.onClick = () => {
         GS.Game.onlinePlay = true;
-        GS.OnlineManager.joinRoom(that.btnOnlineRoomName.button.text);
+        GAME.onlineManager.joinRoom(that.btnOnlineRoomName.button.text);
         // TODO open level after prompted from server
         // GAME.loadOnlineLevel("airstrip1online")
       };
@@ -191,7 +191,7 @@ GS.UIComponents.Menu.prototype = {
       GS.KeybindSettings.textinput.onModifyingTextStart = (e) => {
         let button = this.btnOnlineRoomName.button;
         let joinButton = this.btnOnlineStart;
-        button.disabled = true;
+        button.disabled = false;
         joinButton.disabled = true;
         button.text = "";
         button.states = [""];
@@ -200,7 +200,9 @@ GS.UIComponents.Menu.prototype = {
 
       GS.KeybindSettings.textinput.onModifyingTextStop = function(e) {
         let button = that.btnOnlineRoomName.button;
-        let button = that.btnOnlineStart;
+        let joinButton = that.btnOnlineStart;
+        button.disabled = false;
+        joinButton.disabled = false;
         buttonText = button.text || "";
         button.states = [buttonText];
         button.currentStateIndex = 0;

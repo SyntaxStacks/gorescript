@@ -13,6 +13,10 @@ GS.CollisionManager.prototype = {
 	init: function() {
 	},
 
+	collideOnlinePlayer: function(monster, oldPos, newPos) {
+    return this.collideMonster(monster, oldPos, newPos);
+  },
+
 	collidePlayer: function() {
 		var oldPosBeforeMove = new THREE.Vector3();
 
@@ -67,7 +71,7 @@ GS.CollisionManager.prototype = {
 			var result = GS.CollisionHelper.handleCollisionsSliding(oldPos, newPos, gravity, lsp, triangleIterator);
 			player.afterCollision(result);
 		}
-	}(),	
+	}(),
 
 	slidingBoxLineCollision: function() {
 		var newPos0 = new THREE.Vector2();
@@ -111,7 +115,7 @@ GS.CollisionManager.prototype = {
 
 					aux.copy(result.pos).sub(newPos0).normalize().multiplyScalar(epsilon);
 					result.pos.add(aux);
-					
+
 					newPos0.copy(result.pos).add(slideVelocity);
 				}
 			}
@@ -122,7 +126,7 @@ GS.CollisionManager.prototype = {
 		var that = this;
 		this.grid.forEachUniqueGridObjectInCells(player.linkedGridCells, [GS.Item], function(item) {
 			if (player.view.collisionData.boundingBox.isIntersectionBox(item.view.collisionData.boundingBox)) {
-				player.onItemCollision(item);				
+				player.onItemCollision(item);
 			}
 		});
 	},
@@ -144,7 +148,7 @@ GS.CollisionManager.prototype = {
 			ray.set(position, player.direction);
 			aux.copy(player.direction).multiplyScalar(player.useRange);
 			endPoint.copy(position).add(aux);
-			
+
 			position.toVector2(points[0]);
 			endPoint.toVector2(points[1]);
 
@@ -194,7 +198,7 @@ GS.CollisionManager.prototype = {
 
 	collideMonsterPlayerEnvironment: function() {
 		var points = [ new THREE.Vector2(), new THREE.Vector2(), new THREE.Vector2(), new THREE.Vector2() ];
-		var types = [GS.Player, GS.Monster];
+		var types = [GS.Player, GS.Monster, GS.OnlinePlayer];
 		var aux = new THREE.Vector3();
 		var velocity = new THREE.Vector2();
 		var velocityBox = new THREE.Box2();
@@ -232,8 +236,8 @@ GS.CollisionManager.prototype = {
 				var foundCollision = false;
 				var collisionGridObject = null;
 				this.grid.forEachUniqueGridObjectInCells(cells, types, function(gridObject) {
-					if (foundCollision || gridObject === monster || (gridObject instanceof GS.Monster && gridObject.dead)) {
-						return;		
+					if (foundCollision || gridObject === monster || (gridObject instanceof GS.Monster || gridObject instanceof GS.OnlinePlayer && gridObject.dead)) {
+						return;
 					}
 
 					if (velocityBox.isIntersectionBox(gridObject.view.collisionData.boundingSquare)) {
@@ -327,7 +331,7 @@ GS.CollisionManager.prototype = {
 			GAME.grid.totalBoxSectorChecks++;
 			if (GS.PolygonHelper.intersectionSectorBox(sector, box)) {
 				var floorHeight = sector.floorTopY;
-				if (floorHeight > result.floorHeight) {					
+				if (floorHeight > result.floorHeight) {
 					result.floorHeight = floorHeight;
 					result.ceilHeight = (sector.ceiling === true) ? sector.ceilBottomY : Infinity;
 				}
@@ -376,7 +380,7 @@ GS.CollisionManager.prototype = {
 	elevatorMove: function() {
 		var newPos = new THREE.Vector3();
 		var pos2d = new THREE.Vector2();
-		
+
 		return function(elevator, velocity) {
 			var types = [GS.Item];
 			if (velocity > 0) {
@@ -414,7 +418,7 @@ GS.CollisionManager.prototype = {
 
 					newPos.copy(gridObject.position);
 					newPos.y += velocity;
-					gridObject.updateCollisionData(newPos);				
+					gridObject.updateCollisionData(newPos);
 				}
 			});
 		}
@@ -452,7 +456,7 @@ GS.CollisionManager.prototype = {
 				if (result.type === GS.CollisionTypes.Environment) {
 					this.grid.addEnvironmentImpactParticles(result.pos, result.normal, projectile.color);
 					result.gridObject.onHit();
-				} else 
+				} else
 				if (result.type === GS.CollisionTypes.Entity) {
 					if (result.gridObject.constructor === projectile.sourceGridObject.constructor) {
 						normal.copy(result.pos).sub(projectile.position).normalize();
@@ -462,7 +466,7 @@ GS.CollisionManager.prototype = {
 						result.gridObject.onHit(projectile.damage);
 					}
 				}
-				
+
 				projectile.updateCollisionData(result.pos);
 				projectile.onHit();
 			} else {
@@ -473,7 +477,7 @@ GS.CollisionManager.prototype = {
 				this.updateGridLocationEllipsoid(projectile, newPos);
 			}
 		}
-	}(),	
+	}(),
 
 	collideProjectileEnvironment: function() {
 		var points3d = [ new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3() ];
@@ -483,8 +487,8 @@ GS.CollisionManager.prototype = {
 		return function(projectile, gridLocation, oldPos, newPos, result) {
 			var that = this;
 
-			var lsp = projectile.view.collisionData.ellipsoid;			
-			
+			var lsp = projectile.view.collisionData.ellipsoid;
+
 			points3d[0].copy(oldPos).sub(projectile.size);
 			points3d[1].copy(oldPos).add(projectile.size);
 			points3d[2].copy(newPos).sub(projectile.size);
@@ -495,7 +499,7 @@ GS.CollisionManager.prototype = {
 			var triangleIterator = this.grid.getTriangleIterator(gridLocation, types, function(gridObject) {
 				return gridObject.view.collisionData.boundingBox.isIntersectionBox(velocityBoundingBox);
 			});
-			
+
 			var triangleResult = GS.CollisionHelper.handleCollisionsFirstHit(oldPos, newPos, 0, lsp, triangleIterator);
 			if (triangleResult.foundCollision) {
 				var dist = oldPos.distanceToSquared(triangleResult.pos);
@@ -505,7 +509,7 @@ GS.CollisionManager.prototype = {
 					result.pos.copy(triangleResult.pos);
 					result.normal.copy(triangleResult.normal);
 					result.distance = dist;
-					result.gridObject = triangleResult.gridObject;	
+					result.gridObject = triangleResult.gridObject;
 				}
 			}
 		}
@@ -522,7 +526,7 @@ GS.CollisionManager.prototype = {
 			var gridObjectBox;
 			var cells = this.grid.getCellsFromGridLocation(gridLocation);
 
-			this.grid.forEachUniqueGridObjectInCells(cells, types, function(gridObject) {				
+			this.grid.forEachUniqueGridObjectInCells(cells, types, function(gridObject) {
 				if (gridObject.dead || projectile.sourceGridObject === gridObject) {
 					return;
 				}
@@ -536,7 +540,7 @@ GS.CollisionManager.prototype = {
 						result.type = GS.CollisionTypes.Entity;
 						result.pos.copy(collisionPoint);
 						result.distance = dist;
-						result.gridObject = gridObject;	
+						result.gridObject = gridObject;
 					}
 				}
 			});
@@ -571,7 +575,7 @@ GS.CollisionManager.prototype = {
 			var result = GS.HitscanHelper.getIntersection(projectileStart, dir, that.grid, typesEnvironment, typesEntity);
 
 			if (result.type === GS.CollisionTypes.Environment) {
-				that.grid.addEnvironmentImpactParticles(result.pos, result.normal, 
+				that.grid.addEnvironmentImpactParticles(result.pos, result.normal,
 					weapon.impactParticleColor, weapon.impactParticleCount);
 				result.gridObject.onHit();
 			} else

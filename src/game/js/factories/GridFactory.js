@@ -29,6 +29,8 @@ GS.GridFactory.prototype = {
 		}
 
 		var grid = new GS.Grid(this.renderer, this.scene);
+    // HACK viewFactory
+    grid.viewFactory = this.viewFactory;
 		grid.clearScene();
 		grid.cellSize = this.gridCellSize;
 		grid.cells = cells;
@@ -71,8 +73,9 @@ GS.GridFactory.prototype = {
       let entities = grid.map.layerObjects[GS.MapLayers.Entity].filter((e) => { return e.type === "S"})
       let randomSpawn = entities[Math.floor(Math.random() * entities.length)];
       position.x = randomSpawn.pos.x;
-      position.y = randomSpawn.y;
-      position.z = randomSpawn.pos.y;
+      position.y = 0;
+      // position.y = randomSpawn.y;
+      position.z = randomSpawn.pos.y - 0.0001;
 
     } else {
       position.x = grid.map.playerStartPosition.x;
@@ -150,37 +153,9 @@ GS.GridFactory.prototype = {
 		var entities = grid.map.layerObjects[GS.MapLayers.Entity];
 		for (var i = 0; i < entities.length; i++) {
 			var ntt = entities[i];
-      this.spawnEntity(ntt, grid);
+      grid.spawnEntity(ntt, grid);
 		}
 	},
-
-  spawnEntity: function (ntt, grid) {
-    var type = GS.MapEntities[ntt.type].type;
-
-    var gridObject = new GS[type](grid, GS.MapLayers.Entity, ntt);
-    var offset = gridObject.offset;
-    var size = gridObject.size;
-    gridObject.position = offset.clone();
-    gridObject.position.x += ntt.pos.x;
-    gridObject.position.y += ntt.y || 0;
-    gridObject.position.z += ntt.pos.y;
-
-    gridObject.isStatic = ntt.isStatic;
-
-    var points = [
-      ntt.pos.clone().add(new THREE.Vector2(offset.x, offset.z)).sub(new THREE.Vector2(size.x, size.z)),
-      ntt.pos.clone().add(new THREE.Vector2(offset.x, offset.z)).add(new THREE.Vector2(size.x, size.z)),
-    ];
-    var gridLocation = grid.getGridLocationFromPoints(points);
-    this.viewFactory.applyEntityView(gridObject);
-    gridObject.assignToCells(gridLocation);
-    gridObject.startingSector = gridObject.getSector();
-  },
-
-  spawnEntityAtRuntime function (ntt, grid) {
-    this.spawnEntity(ntt, grid);
-    grid.addEntityMeshTiScene
-  },
 
 	addDoor: function(grid, gridLocation, sector) {
 		var door = new GS.Door(grid, sector);

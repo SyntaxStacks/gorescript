@@ -1,6 +1,4 @@
 GS.OnlineManager = function(grid) {
-	this.grid = grid;
-	this.map = grid.map;
 	this.mapWon = false;
 
 	this.onlinePlayersKilled = 0;
@@ -9,20 +7,23 @@ GS.OnlineManager = function(grid) {
 
 GS.OnlineManager.prototype = {
 	init: function() {
-		this.initGridObjectLibrary();
-		this.initScripts();
+		// this.initGridObjectLibrary();
+		// this.initScripts();
     this.callbacks = {};
     this.onlineRoom.init();
 	},
 
+  setGrid: function (grig) {
+    this.grid = grid;
+    this.map = grid.map;
+  },
+
+  setupClients: function () {
+    this.onlineRoom.setupClients();
+  },
 
   socketListeners: function (socket) {
-    socket.on('ready', () => {
-      p2p.usePeerConnection = true;
-      p2p.emit('peer-obj', { peerId: peerId });
-      (this.callbacks.ready || (() => {}))();
-    })
-
+    // socket.usePeerConnection = true;
 
     // this event will be triggered over the socket transport
     // until `usePeerConnection` is set to `true`
@@ -34,15 +35,12 @@ GS.OnlineManager.prototype = {
       (this.callbacks.getRooms || ((e) => {}))(data.rooms);
     });
 
-    socket.on('room-ping', (data) => {
-      (this.callbacks.roomPing || ((e) => {}))(data.room);
-    });
-
     // socket.on('dead-monster', this.onMonsterDeath.bind(this));
-    socket.on('dead-player', this.onOnlinePlayerDeath.bind(this));
+    socket.on('setup-room', this.onSetupRoom.bind(this));
+    socket.on('player-die', this.onOnlinePlayerDeath.bind(this));
     socket.on('player-join', this.onOnlinePlayerJoin.bind(this));
     // socket.on('player-move', this.onOnlinePlayerMove.bind(this));
-    // socket.on('player-shoot', this.onOnlinePlayerShoot.bind(this));
+    socket.on('player-shoot', this.onOnlinePlayerShoot.bind(this));
     // socket.on('player-pickup', this.onOnlinePlayerItemPickup.bind(this));
     // socket.on('door-open', this.onOnlinePlayerOpenDoor.bind(this));
     // socket.on('switch-change', this.onSwitchStateChange.bind(this));
@@ -53,7 +51,7 @@ GS.OnlineManager.prototype = {
     this.callbacks.getRooms = cb;
     GS.Socket.init();
 
-    this.socket = GS.Socket.p2p;
+    this.socket = GS.Socket.io;
     this.socketListeners(this.socket);
     this.getRooms();
 
@@ -63,60 +61,68 @@ GS.OnlineManager.prototype = {
     GS.Socket.close();
   },
 
-	initGridObjectLibrary: function() {
-		var that = this;
+  startGame: function () {
+    this.pingInterval = setInterval(() => this.roomPing(), 100);
+  },
 
-		var library = {
-			items: {},
-			doors: {},
-			elevators: {},
-			monsters: {},
-			sectors: {},
-			switches: {},
-		};
+  stopGame: function () {
+    clearInterval(this.pingInterval);
+  },
 
-		this.grid.forEachUniqueGridObject([GS.Item, GS.Door, GS.Elevator, GS.Monster, GS.Concrete, GS.Switch], function(gridObject) {
-			if (gridObject instanceof GS.Item) {
-				library.items[gridObject.sourceObj.id] = gridObject;
-			} else
-			if (gridObject instanceof GS.Door) {
-				library.doors[gridObject.sector.id] = gridObject;
-			} else
-			if (gridObject instanceof GS.Elevator) {
-				library.elevators[gridObject.sector.id] = gridObject;
-			} else
-			if (gridObject instanceof GS.Monster) {
-				library.monsters[gridObject.sourceObj.id] = gridObject;
-			} else
-			if (gridObject instanceof GS.Concrete && gridObject.type == GS.MapLayers.Sector) {
-				library.sectors[gridObject.sourceObj.id] = gridObject;
-			} else
-			if (gridObject instanceof GS.Switch) {
-				library.switches[gridObject.segment.id] = gridObject;
-			}
-		});
+	// initGridObjectLibrary: function() {
+	// 	var that = this;
 
-		this.gridObjectLibrary = library;
-	},
+	// 	var library = {
+	// 		items: {},
+	// 		doors: {},
+	// 		elevators: {},
+	// 		monsters: {},
+	// 		sectors: {},
+	// 		switches: {},
+	// 	};
 
-	initScripts: function() {
-		// if (this.map.hasScript === true) {
-		// 	this.script = new GS.MapScripts[this.map.name](this.gridObjectLibrary);
-		// 	this.script.init();
+	// 	this.grid.forEachUniqueGridObject([GS.Item, GS.Door, GS.Elevator, GS.Monster, GS.Concrete, GS.Switch], function(gridObject) {
+	// 		if (gridObject instanceof GS.Item) {
+	// 			library.items[gridObject.sourceObj.id] = gridObject;
+	// 		} else
+	// 		if (gridObject instanceof GS.Door) {
+	// 			library.doors[gridObject.sector.id] = gridObject;
+	// 		} else
+	// 		if (gridObject instanceof GS.Elevator) {
+	// 			library.elevators[gridObject.sector.id] = gridObject;
+	// 		} else
+	// 		if (gridObject instanceof GS.Monster) {
+	// 			library.monsters[gridObject.sourceObj.id] = gridObject;
+	// 		} else
+	// 		if (gridObject instanceof GS.Concrete && gridObject.type == GS.MapLayers.Sector) {
+	// 			library.sectors[gridObject.sourceObj.id] = gridObject;
+	// 		} else
+	// 		if (gridObject instanceof GS.Switch) {
+	// 			library.switches[gridObject.segment.id] = gridObject;
+	// 		}
+	// 	});
 
-		// 	var entities = this.grid.map.layerObjects[GS.MapLayers.Entity];
-		// 	for (var i = 0; i < entities.length; i++) {
-		// 		var entity = entities[i];
-		// 		var type = GS.MapEntities[entity.type].type;
-		// 		if (type === "Monster") {
-		// 			this.maxMonsters++;
-		// 		} else
-		// 		if (type === "Item") {
-		// 			this.maxItems++;
-		// 		}
-		// 	}
-		// }
-	},
+	// 	this.gridObjectLibrary = library;
+	// },
+
+	// initScripts: function() {
+	// 	if (this.map.hasScript === true) {
+	// 		this.script = new GS.MapScripts[this.map.name](this.gridObjectLibrary);
+	// 		this.script.init();
+
+	// 		var entities = this.grid.map.layerObjects[GS.MapLayers.Entity];
+	// 		for (var i = 0; i < entities.length; i++) {
+	// 			var entity = entities[i];
+	// 			var type = GS.MapEntities[entity.type].type;
+	// 			if (type === "Monster") {
+	// 				this.maxMonsters++;
+	// 			} else
+	// 			if (type === "Item") {
+	// 				this.maxItems++;
+	// 			}
+	// 		}
+	// 	}
+	// },
 
 	update: function() {
 		// if (this.script !== undefined) {
@@ -138,12 +144,14 @@ GS.OnlineManager.prototype = {
 
 	onOnlinePlayerDeath: function(data) {
 		// this.onlinePlayersKilled++;
-    this.onlineRoon.removeClient(data.id);
+    this.onlineRoom.removeClient(data.id);
 	},
 
 	onOnlinePlayerJoin: function(data) {
+    console.log('player joined');
+    console.dir(data);
 		// this.onlinePlayersKilled++;
-    this.onlineRoon.addClient(data);
+    this.onlineRoom.addClient(data);
 	},
 
 	onOnlinePlayerMove: function(data) {
@@ -158,6 +166,7 @@ GS.OnlineManager.prototype = {
 
 	onOnlinePlayerShoot: function(player) {
 		// this.activateNearbyMonsters(player);
+    this.onlineRoom.addProjectile(player.id);
 	},
 
 	onOnlinePlayerOpenDoor: function(door) {
@@ -182,23 +191,38 @@ GS.OnlineManager.prototype = {
 
   onSetupRoom: function (room) {
     this.onlineRoom.setupRoom(room);
-  }
+    this.startGame();
+  },
 
   onRoomPing: function(room) {
-    this.onlineRoom.roomPing(room);
+    let id = this.socket.id;
+    this.onlineRoom.roomPing(room, id);
+    let player = {
+      id,
+      x: GAME.grid.player.position.x,
+      y: GAME.grid.player.position.y,
+      z: GAME.grid.player.position.z,
+      direction: GAME.grid.player.direction,
+    };
+    this.socket.emit('player-move', player)
   },
 
   // Events
   joinRoom: function(room) {
-    socket.emit('join-room', { roomName: GS.Settings.roomName })
+    this.socket.emit('join-room', { roomName: GS.Settings.roomName })
   },
 
   roomPing: function() {
-    GS.Socket.p2p.emit('room-ping', { roomName: GS.Settings.roomName })
+    this.socket.emit('room-ping', { roomName: GS.Settings.roomName })
   },
 
   getRooms: function(room) {
-    GS.Socket.p2p.emit('get-rooms', {});
+    this.socket.emit('get-rooms', {});
   },
-
+  playerShoot: function() {
+    this.socket.emit('player-shoot', {});
+  },
+  playerDie: function() {
+    this.socket.emit('player-die', {});
+  },
 };

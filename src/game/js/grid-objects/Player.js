@@ -200,6 +200,10 @@ GS.Player.prototype = GS.inherit(GS.GridObject, {
 		if (this.weapon !== undefined) {
 			this.playerView.onDeath();
 		}
+
+    if (GAME.onlinePlay) {
+      GAME.onlineManager.playerDie();
+    }
 	},
 
 	onItemCollision: function(item) {
@@ -326,6 +330,10 @@ GS.Player.prototype = GS.inherit(GS.GridObject, {
 					if (this.weaponName == "pistol") {
 						this.grid.addProjectile(this, "pistol_bolt", projectileStart, this.direction.clone());
 					}
+          // HACK I don't like this here
+          if (GAME.onlinePlay) {
+            GAME.onlineManager.playerShoot();
+          }
 				}
 
 				if (!this.weapon.infiniteAmmo && this.weapon.ammo === 0) {

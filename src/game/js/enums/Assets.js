@@ -52,6 +52,8 @@ GS.Assets[GS.AssetTypes.Texture] = {
 	"nom_glow": 			{ filename: "nom_glow.png", 				type: GS.TextureTypes.Entity },
 	"eye": 					{ filename: "eye.png", 						type: GS.TextureTypes.Entity },
 	"eye_glow": 			{ filename: "eye_glow.png", 				type: GS.TextureTypes.Entity },
+	"online_player": 					{ filename: "nom.png", 						type: GS.TextureTypes.Entity },
+	"online_player_glow": 			{ filename: "nom_glow.png", 				type: GS.TextureTypes.Entity },
 };
 
 GS.Assets[GS.AssetTypes.CubeTexture] = {
@@ -85,6 +87,17 @@ GS.Assets[GS.AssetTypes.Mesh] = {
 	"nom_death1": 			{ filename: "nom_death1.js" },
 	"nom_death2": 			{ filename: "nom_death2.js" },
 	"nom_death3": 			{ filename: "nom_death3.js" },
+
+	"online_player_walk0": 			{ filename: "nom_walk0.js" },
+	"online_player_walk1": 			{ filename: "nom_walk1.js" },
+	"online_player_walk2": 			{ filename: "nom_walk2.js" },
+	"online_player_walk3": 			{ filename: "nom_walk3.js" },
+	"online_player_walk4": 			{ filename: "nom_walk4.js" },
+	"online_player_walk5": 			{ filename: "nom_walk5.js" },
+	"online_player_death0": 			{ filename: "nom_death0.js" },
+	"online_player_death1": 			{ filename: "nom_death1.js" },
+	"online_player_death2": 			{ filename: "nom_death2.js" },
+	"online_player_death3": 			{ filename: "nom_death3.js" },
 
 	"eye_walk0": 			{ filename: "eye_walk0.js" },
 	"eye_walk1": 			{ filename: "eye_walk1.js" },

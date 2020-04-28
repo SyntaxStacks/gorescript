@@ -32,9 +32,6 @@ GS.Grid.prototype = {
 		this.aiManager = new GS.AIManager(this);
 		this.aiManager.init();
 
-		this.onlineManager = new GS.OnlineManager(this);
-		this.onlineManager.init();
-
 		this.addConcreteMeshesToScene();
 		this.addEntityMeshesToScene();
 
@@ -58,7 +55,6 @@ GS.Grid.prototype = {
 		this.particleView.update();
 		this.lightingView.update();
 		this.aiManager.update();
-		this.onlineManager.update();
 
 		this.totalSphereTriangleChecks = 0;
 		this.totalBoxSectorChecks = 0;
@@ -132,7 +128,7 @@ GS.Grid.prototype = {
 	},
 
   addEntityMeshToScene: function (gridObject) {
-    that.entityMeshes.children.push(gridObject.view.mesh);
+    this.scene.children.push(gridObject.view.mesh);
   },
 
 	addDebugLine: function(pos0, pos1, color) {
@@ -422,4 +418,36 @@ GS.Grid.prototype = {
 		this.skybox.camera.fov = GS.Settings.fov;
 		this.skybox.camera.updateProjectionMatrix();
 	},
+
+  spawnEntity: function (ntt) {
+    var type = GS.MapEntities[ntt.type].type;
+
+    var gridObject = new GS[type](this, GS.MapLayers.Entity, ntt);
+    var offset = gridObject.offset;
+    var size = gridObject.size;
+    gridObject.position = offset.clone();
+    gridObject.position.x += ntt.pos.x;
+    gridObject.position.y += ntt.y || 0;
+    gridObject.position.z += ntt.pos.y;
+
+    gridObject.isStatic = ntt.isStatic;
+
+    var points = [
+      ntt.pos.clone().add(new THREE.Vector2(offset.x, offset.z)).sub(new THREE.Vector2(size.x, size.z)),
+      ntt.pos.clone().add(new THREE.Vector2(offset.x, offset.z)).add(new THREE.Vector2(size.x, size.z)),
+    ];
+    var gridLocation = this.getGridLocationFromPoints(points);
+    this.viewFactory.applyEntityView(gridObject);
+    gridObject.assignToCells(gridLocation);
+    gridObject.startingSector = gridObject.getSector();
+    return gridObject;
+  },
+
+  spawnEntityAtRuntime: function (ntt) {
+    let gridObj = this.spawnEntity(ntt);
+    gridObj.init();
+    this.addEntityMeshToScene(gridObj);
+    return gridObj;
+  },
+
 };

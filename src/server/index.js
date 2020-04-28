@@ -1,18 +1,18 @@
 var express = require('express');
 var app = require('express')()
 var server = require('http').Server(app)
-var p2p = require('socket.io-p2p-server').Server
+// var p2p = require('socket.io-p2p-server').Server
 var io = require('socket.io')(server)
-var clients = {};
+var clients = [];
 
 var rooms = {};
 
 app.use(express.static(__dirname + "/../../dist"))
-io.use(p2p)
+// io.use(p2p)
 
 function getClient(clients, id) {
   for (i in clients) {
-    let client = client[i];
+    let client = clients[i];
     if (client.id === id) {
       return client;
     }
@@ -23,7 +23,7 @@ function getClient(clients, id) {
 
 function getClientRoomName(id) {
   let client = getClient(clients, id);
-  return client.data.room;
+  return client.room;
 }
 
 function getClientRoomData(id) {
@@ -36,29 +36,17 @@ function getClientFromRoom(id) {
   return getClient(roomData.clients, id);
 }
 
-server.listen(3030, function () {
+server.listen(3030, '0.0.0.0', function () {
   console.log("Listening on 3030")
 })
 
 io.on('connection', function (socket) {
-	clients[socket.id] = {
-    data: {
-      room: ''
-    }
-  };
+	clients.push({ id: socket.id });
+  clients.filter((e, i) => clients.indexOf(e) === i);
 
   socket.on('peer-msg', function (data) {
     console.log('Message from peer: %s', data)
     socket.broadcast.emit('peer-msg', data)
-  })
-
-  socket.on('peer-file', function (data) {
-    console.log('File from peer: %s', data)
-    socket.broadcast.emit('peer-file', data)
-  })
-
-  socket.on('go-private', function (data) {
-    socket.broadcast.emit('go-private', data)
   })
 
 	socket.on('join-room', function (data) {
@@ -72,22 +60,18 @@ io.on('connection', function (socket) {
       };
 		}
 
-    let data = {
-      pos: {
-        x: 0,
-        y: 0,
-        z: 0
-      }
-    };
-    let client = {
-      id: socket.id,
-      data,
-    };
+    let client = getClient(clients, socket.id);
+    client.room = room;
+    client.id = socket.id;
+    client.x = 0;
+    client.y = 0;
+    client.z = 0;
+    client.direction = 0;
 
     let currentRoom = rooms[room];
     currentRoom.clients.push(client);
 		socket.join(room);
-		p2p(socket, null, room);
+		// p2p(socket, null, room);
 
     socket.emit('setup-room', currentRoom);
     socket.broadcast.emit('player-join', client);
@@ -98,20 +82,41 @@ io.on('connection', function (socket) {
 	})
 
   socket.on('room-ping', function() {
-    let roomData = getClientRoomData();
+    let roomData = getClientRoomData(socket.id);
     socket.emit('room-ping', roomData);
   })
 
-  socket.on('player-move', function(data) {
-    let pos = data.pos || {};
-    let direction = data.direction;
-    if ([pos.x, pos.y, pos.z, direction].indexOf(undefined) != -1) {
-      let client = getClientFromRoom(socket.id);
-      let clientPos = client.data.pos;
-      clientPos.x = pos.x;
-      clientPos.y = pos.y;
-      clientPos.z = pos.z;
-      client.data.direction = direction;
-    }
+  socket.on('player-move', function(client) {
+    // if ([client.x, client.y, client.z, client.direction].indexOf(undefined) != -1) {
+      let current_client = getClientFromRoom(socket.id);
+      current_client.x = client.x;
+      current_client.y = client.y;
+      current_client.z = client.z;
+      current_client.direction = client.direction;
+    // }
+
   })
+
+  socket.on('player-shoot', function() {
+    // if ([client.x, client.y, client.z, client.direction].indexOf(undefined) != -1) {
+    let current_client = getClientFromRoom(socket.id);
+    socket.broadcast.emit('player-shoot', current_client);
+	})
+
+  socket.on('player-die', function() {
+    // if ([client.x, client.y, client.z, client.direction].indexOf(undefined) != -1) {
+    let current_client = getClientFromRoom(socket.id);
+    socket.broadcast.emit('player-die', current_client);
+	})
+
+  socket.on('disconnect', function() {
+    let client = getClient(clients, socket.id);
+    let room = getClientRoomData(socket.id)
+
+    clients.filter(e => e !== client);
+    if (room)
+      room.clients.filter(e => e !== client);
+  });
+
+
 })

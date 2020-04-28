@@ -78,6 +78,9 @@ GS.Game.prototype = GS.inherit(GS.Base, {
 		this.uiManager = new GS.UIManager();
 		this.uiManager.init();
 
+		this.onlineManager = new GS.OnlineManager();
+		this.onlineManager.init();
+
 		this.soundManager = new GS.SoundManager();
 		this.soundManager.init();
 
@@ -132,6 +135,17 @@ GS.Game.prototype = GS.inherit(GS.Base, {
 
 	postLoad: function() {
     if (this.onlinePlay) {
+      if (this.firstLoad) {
+        this.loadingUI.spinnerOnly = true;
+        this.uiManager.initComponents(this.assetLoader.assets);
+        // this.openMenu();
+        this.firstLoad = false;
+
+        this.onlineManager.setGrid(this.grid);
+        // if (this.noMenu) {
+        //   this.newGame();
+        // }
+      } else {
         this.initComponents(this.assetLoader.assets);
         this.uiManager.initComponents(this.assetLoader.assets, this.grid);
         this.uiManager.useIngameMenu();
@@ -145,6 +159,7 @@ GS.Game.prototype = GS.inherit(GS.Base, {
         }
         this.restartedLevel = false;
 
+      }
     } else {
       if (this.firstLoad) {
         this.loadingUI.spinnerOnly = true;
@@ -170,9 +185,6 @@ GS.Game.prototype = GS.inherit(GS.Base, {
         this.restartedLevel = false;
 
       }
-      if (this.firstPlay) {
-        this.firstPlay = false;
-      }
     }
 	},
 
@@ -181,6 +193,7 @@ GS.Game.prototype = GS.inherit(GS.Base, {
     if (this.onlinePlay) {
         this.grid.update();
         TWEEN.update();
+        this.onlineManager.setupClients();
     } else {
 
       if (!GS.InputHelper.keysPressed && GS.InputHelper.isKeyDown(this.keys.Escape)) {

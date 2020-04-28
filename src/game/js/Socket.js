@@ -2,10 +2,10 @@ GS.Socket = function() {
   let that = this;
   return {
     init: function() {
-      GS.Socket.io = io('http://localhost:3030');
-      GS.Socket.p2p = new P2P(GS.Socket.io);
-      let p2p = GS.Socket.p2p;
-
+      // let url = 'http://localhost:3030';
+      let url = 'http://192.168.86.26:3030';
+      GS.Socket.io = io(url);
+      // GS.Socket.p2p = new P2P(GS.Socket.io);
     },
     close: function() {
       if (GS.Socket.io) {
