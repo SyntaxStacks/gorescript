@@ -2,7 +2,7 @@ GS.DoorStates = {
 	Open: 0,
 	Closed: 1,
 	Opening: 2,
-	Closing: 3,	
+	Closing: 3,
 };
 
 GS.Door = function(grid, sector) {

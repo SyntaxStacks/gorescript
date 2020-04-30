@@ -109,6 +109,42 @@ io.on('connection', function (socket) {
     socket.broadcast.emit('player-die', current_client);
 	})
 
+  socket.on('player-pickup', function(itemInfo) {
+    let client = getClientFromRoom(socket.id);
+    let data = {
+      client,
+      itemInfo,
+    };
+    socket.broadcast.emit('player-pickup', client);
+	})
+
+  socket.on('door-open', function(doorInfo) {
+    let client = getClientFromRoom(socket.id);
+    let data = {
+      client,
+      doorInfo,
+    };
+    socket.broadcast.emit('door-open', data);
+	})
+
+  socket.on('switch-change', function(switchInfo) {
+    let client = getClientFromRoom(socket.id);
+    let data = {
+      client,
+      switchInfo
+    };
+    socket.broadcast.emit('switch-change', data);
+	})
+
+  socket.on('use-elevator', function(elevatorInfo) {
+    let client = getClientFromRoom(socket.id);
+    let data = {
+      client,
+      elevatorInfo
+    };
+    socket.broadcast.emit('use-elevator', data);
+	})
+
   socket.on('disconnect', function() {
     let client = getClient(clients, socket.id);
     let room = getClientRoomData(socket.id)

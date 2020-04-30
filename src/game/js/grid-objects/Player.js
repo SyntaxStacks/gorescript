@@ -211,6 +211,9 @@ GS.Player.prototype = GS.inherit(GS.GridObject, {
 
 		if (this.pickupWeapon(name) || this.pickupAmmo(name) || this.pickupMedkit(name)) {
 			this.grid.aiManager.onPlayerItemPickup(this, item);
+      if (GAME.onlinePlay) {
+        GAME.onlineManager.playerPickup(item);
+      }
 			item.remove();
 			this.playerView.onItemPickup();
 		}
@@ -292,6 +295,7 @@ GS.Player.prototype = GS.inherit(GS.GridObject, {
 
 	updateUse: function() {
 		if (this.canUse && GS.Keybinds.use.inUse) {
+      GAME.onlineManager.useTarget(this.useTarget);
 			this.useTarget.onUse();
 		}
 	},

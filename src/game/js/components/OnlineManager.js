@@ -41,10 +41,12 @@ GS.OnlineManager.prototype = {
     socket.on('player-join', this.onOnlinePlayerJoin.bind(this));
     // socket.on('player-move', this.onOnlinePlayerMove.bind(this));
     socket.on('player-shoot', this.onOnlinePlayerShoot.bind(this));
-    // socket.on('player-pickup', this.onOnlinePlayerItemPickup.bind(this));
-    // socket.on('door-open', this.onOnlinePlayerOpenDoor.bind(this));
-    // socket.on('switch-change', this.onSwitchStateChange.bind(this));
+    socket.on('player-pickup', this.onOnlinePlayerItemPickup.bind(this));
+    socket.on('door-open', this.onOnlinePlayerOpenDoor.bind(this));
+    socket.on('switch-change', this.onSwitchStateChange.bind(this));
     socket.on('room-ping', this.onRoomPing.bind(this));
+    socket.on('use-elevator', this.onUseElevator.bind(this));
+    socket.on('enter-sector', this.onEnterSector.bind(this));
   },
 
   start: function (cb) {
@@ -169,24 +171,41 @@ GS.OnlineManager.prototype = {
     this.onlineRoom.addProjectile(player.id);
 	},
 
-	onOnlinePlayerOpenDoor: function(door) {
-		if (this.script !== undefined) {
-			this.script.onPlayerOpenDoor(door);
-		}
+	onOnlinePlayerOpenDoor: function(data) {
+    let id = data.doorInfo.id;
+    let aiManager = GAME.grid.aiManager;
+    let doorObj = aiManager.gridObjectLibrary.doors[id];
+    doorObj.onUse();
 	},
 
-	onOnlinePlayerItemPickup: function(player, item) {
+	onOnlinePlayerItemPickup: function(player, old_item) {
 		// this.itemsPickedUp++;
-
-		// if (this.script !== undefined) {
-		// 	this.script.onItemPickup(item);
-		// }
+		GAME.grid.forEachUniqueGridObjectInCells(GAME.grid.player.linkedGridCells, [GS.Item], function(item) {
+      if (item.id === old_item.id) {
+        item.remove();
+        GAME.grid.aiManager.onItemPickup(item);
+      }
+		});
 	},
 
-	onSwitchStateChange: function(switchObj) {
-		if (this.script !== undefined) {
-			this.script.onSwitchStateChange(switchObj);
-		}
+	onEnterSector: function(sector) {
+    let aiManager = GAME.grid.aiManager;
+    let sectorObj = aiManager.gridObjectLibrary.sectors[sector.id];
+    // aiManager.onSwitchStateChange(sectorObj);
+	},
+
+	onUseElevator: function(data) {
+    let id = data.elevatorInfo.id;
+    let aiManager = GAME.grid.aiManager;
+    let elevatorObj = aiManager.gridObjectLibrary.elevators[id];
+    elevatorObj.onUse();
+	},
+
+	onSwitchStateChange: function(switchInfo) {
+    let id = data.switchInfo.id
+    let aiManager = GAME.grid.aiManager;
+    let switchObj = aiManager.gridObjectLibrary.switches[switchInfo.id];
+    aiManager.onSwitchStateChange(switchObj);
 	},
 
   onSetupRoom: function (room) {
@@ -225,4 +244,31 @@ GS.OnlineManager.prototype = {
   playerDie: function() {
     this.socket.emit('player-die', {});
   },
+  playerPickup: function(item) {
+    this.socket.emit('player-pickup', { id: item.sourceObj.id });
+  },
+  openDoor: function(door) {
+    this.socket.emit('door-open', { id: door.sector.id });
+  },
+  useElevator: function(elevator) {
+    this.socket.emit('use-elevator', { id: elevator.sector.id });
+  },
+  enterSector: function(sector) {
+    this.socket.emit('enter-sector', { id: elevator.sourceObj.id });
+  },
+  switchStateChange: function(switchObj) {
+    this.socket.emit('switch-change', { id: switchObj.segment.id });
+  },
+  useTarget: function (obj) {
+    let library = GAME.grid.aiManager.gridObjectLibrary;
+    if (obj instanceof GS.Door) {
+      this.openDoor(obj);
+    } else
+    if (obj instanceof GS.Elevator) {
+      this.useElevator(obj);
+    } else
+    if (obj instanceof GS.Switch) {
+      this.switchStateChange(obj);
+    }
+  }
 };

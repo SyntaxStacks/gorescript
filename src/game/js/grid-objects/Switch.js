@@ -23,6 +23,7 @@ GS.Switch.prototype = GS.inherit(GS.GridObject, {
 		this.view.mesh.material.map = this.view.textureOn;
 		this.usable = false;
 		this.grid.aiManager.onSwitchStateChange(this);
+    GAME.onlineManager.switchStateChange(this);
 		this.grid.soundManager.playSound("switch_on");
 	},
 
