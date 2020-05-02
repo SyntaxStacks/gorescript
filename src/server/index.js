@@ -1,3 +1,4 @@
+var _ = require('lodash');
 var express = require('express');
 var app = require('express')()
 var server = require('http').Server(app)
@@ -33,7 +34,11 @@ function getClientRoomData(id) {
 
 function getClientFromRoom(id) {
   let roomData = getClientRoomData(id);
-  return getClient(roomData.clients, id);
+  if (roomData) {
+    return getClient(roomData.clients, id);
+  }
+
+  return false
 }
 
 server.listen(3030, '0.0.0.0', function () {
@@ -41,8 +46,9 @@ server.listen(3030, '0.0.0.0', function () {
 })
 
 io.on('connection', function (socket) {
-	clients.push({ id: socket.id });
-  clients.filter((e, i) => clients.indexOf(e) === i);
+  let client = { id: socket.id };
+	clients.push(client);
+  _.uniqBy(clients, 'id');
 
   socket.on('peer-msg', function (data) {
     console.log('Message from peer: %s', data)
@@ -69,7 +75,8 @@ io.on('connection', function (socket) {
     client.direction = 0;
 
     let currentRoom = rooms[room];
-    currentRoom.clients.push(client);
+    currentRoom.clients.unshift(client);
+    _.uniqBy(currentRoom.clients, 'id');
 		socket.join(room);
 		// p2p(socket, null, room);
 
@@ -145,13 +152,52 @@ io.on('connection', function (socket) {
     socket.broadcast.emit('use-elevator', data);
 	})
 
+  socket.on('up-elevator', function(elevatorInfo) {
+    let client = getClientFromRoom(socket.id);
+    let data = {
+      client,
+      elevatorInfo
+    };
+    socket.broadcast.emit('up-elevator', data);
+	})
+
+  socket.on('down-elevator', function(elevatorInfo) {
+    let client = getClientFromRoom(socket.id);
+    let data = {
+      client,
+      elevatorInfo
+    };
+    socket.broadcast.emit('down-elevator', data);
+	})
+
+  socket.on('zone-enter', function(zone) {
+    let client = getClientFromRoom(socket.id);
+    let data = {
+      client,
+      zone
+    };
+    socket.broadcast.emit('zone-enter', data);
+	})
+
+  socket.on('zone-leave', function(zone) {
+    let client = getClientFromRoom(socket.id);
+    let data = {
+      client,
+      zone
+    };
+    socket.broadcast.emit('zone-leave', data);
+	})
+
   socket.on('disconnect', function() {
     let client = getClient(clients, socket.id);
     let room = getClientRoomData(socket.id)
 
-    clients.filter(e => e !== client);
-    if (room)
-      room.clients.filter(e => e !== client);
+    if (room) {
+      let current_client = getClientFromRoom(socket.id);
+      socket.broadcast.emit('player-die', current_client);
+      _.remove(room.clients, e => e.id === socket.id);
+    }
+    _.remove(clients, e => e.id === socket.id);
   });
 
 

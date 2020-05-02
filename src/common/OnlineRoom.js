@@ -26,7 +26,7 @@ GS.OnlineRoom.prototype = {
       }
       let client = this.findClient(updatedClient.id);
       if (!client) {
-        this.addClient(updatedClient);
+        // this.addClient(updatedClient);
       } else {
         this.updateClient(updatedClient);
       }
@@ -34,7 +34,9 @@ GS.OnlineRoom.prototype = {
   },
 
   addClient: function (client) {
-
+    if (GAME.onlineManager.socket.id === client.id) {
+      return;
+    }
     let ntt = {
       id: client.id,
       pos: new THREE.Vector2(client.x || 0, client.y || 0),

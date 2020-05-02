@@ -44,6 +44,7 @@ GS.GridFactory.prototype = {
 		this.addPlayerToGrid(grid);
     grid.respawn = () => {
       this.addPlayerToGrid(grid);
+      grid.player.init();
     };
 
 		grid.initSkybox(this.viewFactory.getSkyboxMesh());

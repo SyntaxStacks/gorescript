@@ -194,6 +194,9 @@ GS.Game.prototype = GS.inherit(GS.Base, {
         this.grid.update();
         TWEEN.update();
         this.onlineManager.setupClients();
+        if (this.grid.player.dead && !GS.InputHelper.keysPressed && GS.InputHelper.isKeyDown(this.keys.Enter)) {
+          this.grid.respawn();
+        }
     } else {
 
       if (!GS.InputHelper.keysPressed && GS.InputHelper.isKeyDown(this.keys.Escape)) {
@@ -380,7 +383,7 @@ GS.Game.prototype = GS.inherit(GS.Base, {
 		this.graphicsManager.setGrid(this.grid);
 
 		// @if TARGET='WEB'
-		this.grid.player.controls.addEventListener("pointerLockDisabled", function() { that.openMenu(); });
+		// this.grid.player.controls.addEventListener("pointerLockDisabled", function() { that.openMenu(); });
 		// @endif
 
 		// console.log("collision triangles", viewFactory.triangleCount);

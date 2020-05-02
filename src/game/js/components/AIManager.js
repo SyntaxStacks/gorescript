@@ -127,7 +127,7 @@ GS.AIManager.prototype = {
 	},
 
 	updateTime: function() {
-		if (!this.grid.player.inMenu) {
+		if (!this.grid.player.inMenu && !this.onlinePlay) {
 			this.timeSpent += performance.now() - this.lastFrameTime;
 			this.minutes = Math.floor(Math.floor(this.timeSpent) / 60000);
 			this.seconds = Math.floor(Math.floor(this.timeSpent) / 1000 - this.minutes * 60);

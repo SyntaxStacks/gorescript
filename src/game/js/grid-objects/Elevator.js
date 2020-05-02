@@ -2,10 +2,10 @@ GS.ElevatorStates = {
 	Down: 0,
 	Up: 1,
 	GoindDown: 2,
-	GoingUp: 3,	
+	GoingUp: 3,
 };
 
-GS.Elevator = function(grid, sector) {	
+GS.Elevator = function(grid, sector) {
 	GS.GridObject.call(this, grid);
 
 	this.sector = sector;
@@ -41,7 +41,7 @@ GS.Elevator.prototype = GS.inherit(GS.GridObject, {
 	update: function() {
 		this.velocity.set(0, 0, 0);
 		var oldY = 0;
-		
+
 		switch (this.state) {
 			case GS.ElevatorStates.Down:
 				if (this.automatic) {
@@ -140,14 +140,14 @@ GS.Elevator.prototype = GS.inherit(GS.GridObject, {
 		return this;
 	},
 
-	goDown: function() {
+	goDown: function(emit = true) {
 		this.state = GS.ElevatorStates.GoingDown;
 		this.grid.soundManager.playSound("elevator_move");
 
 		return this;
 	},
 
-	goUp: function() {
+	goUp: function(emit = true) {
 		this.state = GS.ElevatorStates.GoingUp;
 		this.grid.soundManager.playSound("elevator_move");
 

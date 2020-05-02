@@ -179,7 +179,6 @@ GS.UIComponents.Menu.prototype = {
 
       this.btnOnlineStart = this.onlinePanel.addButton("join");
       this.btnOnlineStart.onClick = () => {
-        GS.Game.onlinePlay = true;
         GAME.onlineManager.joinRoom(that.btnOnlineRoomName.button.text);
         // TODO open level after prompted from server
         // GAME.loadOnlineLevel("airstrip1online")
