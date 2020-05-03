@@ -73,6 +73,7 @@ io.on('connection', function (socket) {
     client.y = 0;
     client.z = 0;
     client.direction = 0;
+    client.score = 0;
 
     let currentRoom = rooms[room];
     currentRoom.clients.unshift(client);
@@ -110,10 +111,18 @@ io.on('connection', function (socket) {
     socket.broadcast.emit('player-shoot', current_client);
 	})
 
-  socket.on('player-die', function() {
+  socket.on('player-die', function(data) {
+    // if ([client.x, client.y, client.z, client.direction].indexOf(undefined) != -1) {
+    let killer = getClientFromRoom(data.killer);
+    let current_client = getClientFromRoom(socket.id);
+    killer.score++;
+    socket.broadcast.emit('player-die', current_client);
+	})
+
+  socket.on('player-respawn', function() {
     // if ([client.x, client.y, client.z, client.direction].indexOf(undefined) != -1) {
     let current_client = getClientFromRoom(socket.id);
-    socket.broadcast.emit('player-die', current_client);
+    socket.broadcast.emit('player-respawn', current_client);
 	})
 
   socket.on('player-pickup', function(itemInfo) {

@@ -182,18 +182,18 @@ GS.Player.prototype = GS.inherit(GS.GridObject, {
 		}
 	},
 
-	onHit: function(damage) {
+	onHit: function(projectile) {
 		if (!this.godEnabled) {
-			this.health -= damage;
+			this.health -= projectile.damage;
 			if (this.health <= 0) {
 				this.health = 0;
-				this.onDeath();
+				this.onDeath({ killId: projectile.sourceGridObject.id });
 			}
 			this.playerView.onDamage();
 		}
 	},
 
-	onDeath: function() {
+	onDeath: function(data) {
 		this.dead = true;
 		this.grid.soundManager.playSound("player_death");
 
@@ -202,7 +202,7 @@ GS.Player.prototype = GS.inherit(GS.GridObject, {
 		}
 
     if (GAME.onlinePlay) {
-      GAME.onlineManager.playerDie();
+      GAME.onlineManager.playerDie(data);
     }
 	},
 

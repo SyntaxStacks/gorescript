@@ -157,7 +157,7 @@ GS.Monster.prototype = GS.inherit(GS.GridObject, {
 		}
 	}(),
 
-	updateMoveRanged: function() {		
+	updateMoveRanged: function() {
 		var aux = new THREE.Vector3();
 		var targetPos = new THREE.Vector3();
 
@@ -181,7 +181,7 @@ GS.Monster.prototype = GS.inherit(GS.GridObject, {
 					this.calculateDirection(targetPos);
 					this.calculateRotation();
 				}
-			}			
+			}
 		}
 	}(),
 
@@ -216,7 +216,7 @@ GS.Monster.prototype = GS.inherit(GS.GridObject, {
 
 		this.grid.soundManager.playSound("monster_bite");
 		this.meleeAttackCooldown = this.meleeAttackMaxCooldown;
-		target.onHit(this.meleeDamage);
+		target.onHit({ damage: this.meleeDamage });
 		this.grid.addEntityImpactParticles(target.position, target.bloodColor);
 	},
 
@@ -234,7 +234,7 @@ GS.Monster.prototype = GS.inherit(GS.GridObject, {
 						this.rangedAttack();
 					}
 				} else
-				if (this.isFacing(target.position) && 
+				if (this.isFacing(target.position) &&
 					this.grid.collisionManager.checkMonsterLineOfSight(this, target, this.rangedAttackRange)) {
 
 					this.chargeUpRangedAttack();
@@ -267,7 +267,7 @@ GS.Monster.prototype = GS.inherit(GS.GridObject, {
 			this.chargingUpRangedAttack = false;
 			this.animationView.setLoop("walk");
 
-			this.rangedAttackCooldown = this.rangedAttackMaxCooldown + 
+			this.rangedAttackCooldown = this.rangedAttackMaxCooldown +
 				Math.floor(Math.random() * this.rangedAttackCooldownRandomModifier);
 
 			direction.copy(target.position).sub(this.position).normalize();
@@ -374,12 +374,12 @@ GS.Monster.prototype = GS.inherit(GS.GridObject, {
 		this.grid.soundManager.playSound(this.roarSound);
 	},
 
-	onHit: function(damage) {
+	onHit: function(projectile) {
 		if (this.state !== GS.MonsterStates.Active) {
 			this.activate(true);
 		}
 
-		if (Math.random() <= this.painChance) {			
+		if (Math.random() <= this.painChance) {
 			this.inPain = true;
 			this.moving = false;
 
@@ -391,7 +391,7 @@ GS.Monster.prototype = GS.inherit(GS.GridObject, {
 			this.grid.soundManager.playSound(this.painSound);
 		}
 
-		this.health -= damage;
+		this.health -= projectile.damage;
 		if (this.health < 0) {
 			this.health = 0;
 			this.onDeath();

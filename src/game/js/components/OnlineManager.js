@@ -43,6 +43,7 @@ GS.OnlineManager.prototype = {
     // socket.on('dead-monster', this.onMonsterDeath.bind(this));
     socket.on('setup-room', this.onSetupRoom.bind(this));
     socket.on('player-die', this.onOnlinePlayerDeath.bind(this));
+    socket.on('player-respawn', this.onOnlinePlayerRespawn.bind(this));
     socket.on('player-join', this.onOnlinePlayerJoin.bind(this));
     // socket.on('player-move', this.onOnlinePlayerMove.bind(this));
     socket.on('player-shoot', this.onOnlinePlayerShoot.bind(this));
@@ -56,6 +57,7 @@ GS.OnlineManager.prototype = {
     socket.on('enter-sector', this.onEnterSector.bind(this));
     socket.on('zone-enter', this.onZoneEnter.bind(this));
     socket.on('zone-leave', this.onZoneLeave.bind(this));
+    socket.on('map-won', this.onMapWon.bind(this));
   },
 
   start: function (cb) {
@@ -153,9 +155,13 @@ GS.OnlineManager.prototype = {
 		// this.monstersKilled++;
 	},
 
+	onOnlinePlayerRespawn: function(data) {
+    this.onlineRoom.clientRespawn(data.id);
+	},
+
 	onOnlinePlayerDeath: function(data) {
 		// this.onlinePlayersKilled++;
-    this.onlineRoom.removeClient(data.id);
+    this.onlineRoom.clientDie(data.id);
 	},
 
 	onOnlinePlayerJoin: function(data) {
@@ -284,6 +290,10 @@ GS.OnlineManager.prototype = {
     this.socket.emit('player-move', player)
   },
 
+  onMapWon: function () {
+    GAME.grid.aiManager.mapWon = true;
+  },
+
   // Events
   joinRoom: function(room) {
     GS.Game.onlinePlay = true;
@@ -300,8 +310,11 @@ GS.OnlineManager.prototype = {
   playerShoot: function() {
     this.socket.emit('player-shoot', {});
   },
-  playerDie: function() {
-    this.socket.emit('player-die', {});
+  playerDie: function(data) {
+    this.socket.emit('player-die', { killer: data.killId });
+  },
+  playerRespawn: function() {
+    this.socket.emit('player-respawn', {});
   },
   playerPickup: function(item) {
     this.socket.emit('player-pickup', { id: item.sourceObj.id });

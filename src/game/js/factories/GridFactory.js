@@ -43,8 +43,22 @@ GS.GridFactory.prototype = {
 		this.assignMapEntitiesToGrid(grid);
 		this.addPlayerToGrid(grid);
     grid.respawn = () => {
-      this.addPlayerToGrid(grid);
-      grid.player.init();
+      let position = new THREE.Vector3();
+      this.assignPositionToRandomSpawn(position, grid);
+      grid.player.position = position;
+      grid.player.health = 100;
+      grid.player.playerView.showWeapon("pistol");
+      let gridLoc = {};
+      gridLoc.x = position.x;
+      gridLoc.y = position.y;
+      var gridLocation = grid.getGridLocationFromPoints([gridLoc]);
+      grid.player.assignToCells(gridLocation);
+      grid.player.dead = false;
+      // this.addPlayerToGrid(grid);
+      // grid.player.init();
+      // grid.player.playerView.lightingView = grid.lightingView;
+      // GAME.uiManager.reinit();
+      GAME.onlineManager.playerRespawn();
     };
 
 		grid.initSkybox(this.viewFactory.getSkyboxMesh());
@@ -65,27 +79,39 @@ GS.GridFactory.prototype = {
 		return regionHelper.getRegions(sectors, sectorLinks);
 	},
 
+  getRandomSpawnPoint: function (grid) {
+    let entities = grid.map.layerObjects[GS.MapLayers.Entity].filter((e) => { return e.type === "S"})
+    let randomSpawn = entities[Math.floor(Math.random() * entities.length)];
+    return randomSpawn;
+  },
+
+  assignPositionToRandomSpawn(position, grid) {
+    let randomSpawn = this.getRandomSpawnPoint(grid);
+    position.x = randomSpawn.pos.x;
+    // position.y = 0;
+    position.y = randomSpawn.y + 3.5;
+    position.z = randomSpawn.pos.y - 0.0001;
+  },
+
 	addPlayerToGrid: function(grid) {
 		var playerView = this.viewFactory.getPlayerView();
 		grid.player = new GS.Player(grid, this.camera, playerView);
 
 		var position = new THREE.Vector3();
+    let gridLoc = {};
     if (GAME.onlinePlay) {
-      let entities = grid.map.layerObjects[GS.MapLayers.Entity].filter((e) => { return e.type === "S"})
-      let randomSpawn = entities[Math.floor(Math.random() * entities.length)];
-      position.x = randomSpawn.pos.x;
-      position.y = 0;
-      // position.y = randomSpawn.y;
-      position.z = randomSpawn.pos.y - 0.0001;
-
+      this.assignPositionToRandomSpawn(position, grid);
+      gridLoc.x = position.x;
+      gridLoc.y = position.y;
     } else {
-      position.x = grid.map.playerStartPosition.x;
+      gridLoc = grid.map.playerStartPosition;
+      position.x = gridLoc.x;
       position.y = 0;
-      position.z = grid.map.playerStartPosition.y - 0.0001; // fix for visual bug
+      position.z = gridLoc.y - 0.0001; // fix for visual bug
     }
 
 		grid.player.position = position;
-		var gridLocation = grid.getGridLocationFromPoints([grid.map.playerStartPosition]);
+		var gridLocation = grid.getGridLocationFromPoints([gridLoc]);
 		grid.player.assignToCells(gridLocation);
 
 		grid.player.view.debugMesh = this.viewFactory.getDebugMesh(position, grid.player.size);

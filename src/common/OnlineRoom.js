@@ -21,6 +21,7 @@ GS.OnlineRoom.prototype = {
   roomPing: function (room, id) {
     for (i in room.clients) {
       updatedClient = room.clients[i];
+      console.log(updatedClient.id + ": " + updatedClient.score)
       if (updatedClient.id === id) {
         continue;
       }
@@ -51,7 +52,24 @@ GS.OnlineRoom.prototype = {
   },
 
   findClient: function (id) {
-    return this.clients.filter((e) => e.id === id)[0] || false;
+    if (GAME.onlineManager.socket.id === id) {
+      return false;
+    }
+    return this.clients.filter((e) => e.id === id && e.id !== GAME.onlineManager.socket.id)[0] || false;
+  },
+
+  clientDie: function (id) {
+    let client = this.findClient(id);
+    if (client) {
+      client.onDeath();
+    }
+  },
+
+  clientRespawn: function (id) {
+    let client = this.findClient(id);
+    if (client) {
+      client.onRespawn();
+    }
   },
 
   removeClient: function (id) {

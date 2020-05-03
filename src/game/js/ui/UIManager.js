@@ -71,6 +71,16 @@ GS.UIManager.prototype = {
 		this.overrideRedraw = true;
 	},
 
+  reinit: function () {
+    let player = GAME.grid.player;
+    this.player = player;
+    this.powerBars.player = player;
+    this.crosshair.player = player;
+    this.notifications.player = player;
+    this.winScreen.player = player;
+    this.automap.player = player;
+  },
+
 	show: function() {
 		this.overrideRedraw = true;
 		this.cvs.show();

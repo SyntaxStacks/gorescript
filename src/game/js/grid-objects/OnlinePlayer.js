@@ -236,7 +236,7 @@ GS.OnlinePlayer.prototype = GS.inherit(GS.GridObject, {
 		this.grid.soundManager.playSound(this.roarSound);
 	},
 
-	onHit: function(damage) {
+	onHit: function(projectile) {
 		if (this.state !== GS.OnlinePlayerStates.Active) {
 			this.activate(true);
 		}
@@ -253,11 +253,28 @@ GS.OnlinePlayer.prototype = GS.inherit(GS.GridObject, {
 			this.grid.soundManager.playSound(this.painSound);
 		}
 
-		this.health -= damage;
+		this.health -= projectile.damage;
 		if (this.health < 0) {
 			this.health = 0;
 			this.onDeath();
 		}
+	},
+
+	onRespawn: function() {
+    if (!this.dead) {
+      return;
+    }
+		this.moving = true;
+
+		// var target = this.grid.player;
+		// this.calculateDirection(target.position);
+		this.calculateRotation();
+
+		this.dead = false;
+    // TODO respawn sound
+		// this.grid.soundManager.playSound(this.deathSound);
+		this.animationView.setLoop("walk");
+		this.updateMesh();
 	},
 
 	onDeath: function() {

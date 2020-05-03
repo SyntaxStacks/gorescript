@@ -455,7 +455,7 @@ GS.CollisionManager.prototype = {
 			if (result.type !== GS.CollisionTypes.None) {
 				if (result.type === GS.CollisionTypes.Environment) {
 					this.grid.addEnvironmentImpactParticles(result.pos, result.normal, projectile.color);
-					result.gridObject.onHit();
+					result.gridObject.onHit(projectile);
 				} else
 				if (result.type === GS.CollisionTypes.Entity) {
 					if (result.gridObject.constructor === projectile.sourceGridObject.constructor) {
@@ -463,7 +463,7 @@ GS.CollisionManager.prototype = {
 						this.grid.addEnvironmentImpactParticles(result.pos, normal, projectile.color);
 					} else {
 						this.grid.addEntityImpactParticles(result.pos, result.gridObject.bloodColor);
-						result.gridObject.onHit(projectile.damage);
+						result.gridObject.onHit(projectile);
 					}
 				}
 
@@ -581,7 +581,7 @@ GS.CollisionManager.prototype = {
 			} else
 			if (result.type === GS.CollisionTypes.Entity) {
 				that.grid.addEntityImpactParticles(result.pos, result.gridObject.bloodColor);
-				result.gridObject.onHit(weapon.damage);
+				result.gridObject.onHit({ damage: weapon.damage });
 			}
 		});
 	},
