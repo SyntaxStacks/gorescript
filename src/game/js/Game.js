@@ -44,6 +44,7 @@ GS.Game.prototype = GS.inherit(GS.Base, {
 		this.firstLoad = true;
 		this.firstPlay = true;
 		this.onlinePlay = false;
+    this.firstOnlineRun = true;
 		this.mapWon = false;
 		this.restartedLevel = false;
 
@@ -193,9 +194,13 @@ GS.Game.prototype = GS.inherit(GS.Base, {
     if (this.onlinePlay) {
         this.grid.update();
         TWEEN.update();
-        this.onlineManager.setupClients();
         if (this.grid.player.dead && !GS.InputHelper.keysPressed && GS.InputHelper.isKeyDown(this.keys.Enter)) {
           this.grid.respawn();
+        }
+
+        if (this.firstOnlineRun) {
+          this.firstOnlineRun = false;
+          this.onlineManager.requestSetup();
         }
     } else {
 

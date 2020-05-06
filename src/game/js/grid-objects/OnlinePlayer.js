@@ -110,13 +110,13 @@ GS.OnlinePlayer.prototype = GS.inherit(GS.GridObject, {
 			// this.calculateDirection(target.position);
 			this.calculateRotation();
   },
-	onUpdateMove: function(updateClient) {
+	onUpdateMove: function(updatedClient, pos) {
     if (!this.dead) {
       let oldPos = this.position.clone();
-      this.position.set(updatedClient.x, updatedClient.y, updatedClient.z);
+      this.position.set(pos.x, pos.y, pos.z);
       let newPos = this.position.clone();
       GAME.onlineManager.checkZones(this, oldPos, newPos);
-      let direction = updatedClient.direction;
+      let direction = pos.direction;
       this.direction.set(direction.x, direction.y, direction.z);
       this.move();
     }

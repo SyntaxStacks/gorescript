@@ -23,8 +23,8 @@ GS.OnlineManager.prototype = {
     this.map = grid.map;
   },
 
-  setupClients: function () {
-    this.onlineRoom.setupClients();
+  setupClients: function (room) {
+    this.onlineRoom.setupClients(room);
   },
 
   socketListeners: function (socket) {
@@ -42,15 +42,15 @@ GS.OnlineManager.prototype = {
 
     // socket.on('dead-monster', this.onMonsterDeath.bind(this));
     socket.on('setup-room', this.onSetupRoom.bind(this));
+    socket.on('setup-grid', this.onSetupGrid.bind(this));
     socket.on('player-die', this.onOnlinePlayerDeath.bind(this));
     socket.on('player-respawn', this.onOnlinePlayerRespawn.bind(this));
     socket.on('player-join', this.onOnlinePlayerJoin.bind(this));
-    // socket.on('player-move', this.onOnlinePlayerMove.bind(this));
+    socket.on('player-move', this.onOnlinePlayerMove.bind(this));
     socket.on('player-shoot', this.onOnlinePlayerShoot.bind(this));
     socket.on('player-pickup', this.onOnlinePlayerItemPickup.bind(this));
     socket.on('door-open', this.onOnlinePlayerOpenDoor.bind(this));
     socket.on('switch-change', this.onSwitchStateChange.bind(this));
-    socket.on('room-ping', this.onRoomPing.bind(this));
     socket.on('use-elevator', this.onUseElevator.bind(this));
     // socket.on('up-elevator', this.onUpElevator.bind(this));
     // socket.on('down-elevator', this.onDownElevator.bind(this));
@@ -58,6 +58,7 @@ GS.OnlineManager.prototype = {
     socket.on('zone-enter', this.onZoneEnter.bind(this));
     socket.on('zone-leave', this.onZoneLeave.bind(this));
     socket.on('map-won', this.onMapWon.bind(this));
+    socket.on('room-sync', this.onRoomSync.bind(this))
   },
 
   start: function (cb) {
@@ -75,7 +76,7 @@ GS.OnlineManager.prototype = {
   },
 
   startGame: function () {
-    this.pingInterval = setInterval(() => this.roomPing(), 100);
+    this.pingInterval = setInterval(() => this.roomSync(), 5 * 1000);
   },
 
   stopGame: function () {
@@ -171,13 +172,20 @@ GS.OnlineManager.prototype = {
     this.onlineRoom.addClient(data);
 	},
 
-	onOnlinePlayerMove: function(player, oldPos, newPos) {
-		if (this.script !== undefined) {
-			this.checkZones(player, oldPos, newPos);
-		}
+	onOnlinePlayerMove: function(data) {
+    newPos = {
+      x: data.client.x,
+      y: data.client.y,
+      z: data.client.z,
+      direction: data.client.direction
+    };
+    this.onlineRoom.updateClient(data.client, newPos);
+    // if (this.script !== undefined) {
+    //   this.checkZones(data.client,
+    // }
 
-		this.wakeUpNearbyMonsters(player);
-		this.applyRegionVisibility(player);
+		// this.wakeUpNearbyMonsters(player);
+		// this.applyRegionVisibility(player);
 	},
 
 	checkZones: function() {
@@ -185,10 +193,14 @@ GS.OnlineManager.prototype = {
 		var newPos2d = new THREE.Vector2();
 
 		return function(player, oldPos, newPos) {
+      let aiManager = GAME.grid.aiManager;
+      if (aiManager.script === undefined) {
+        return;
+      }
+
 			oldPos.toVector2(oldPos2d);
 			newPos.toVector2(newPos2d);
 
-      let aiManager = GAME.grid.aiManager;
 			for (let i = 0; i < aiManager.zones.length; i++) {
 				var zone = aiManager.zones[i];
 				var c1 = zone.boundingSquare.containsPoint(oldPos2d);
@@ -272,36 +284,47 @@ GS.OnlineManager.prototype = {
     aiManager.onSwitchStateChange(switchObj);
 	},
 
+  onSetupGrid: function (room) {
+    this.setupClients(room);
+  },
+
   onSetupRoom: function (room) {
     this.onlineRoom.setupRoom(room);
     this.startGame();
-  },
-
-  onRoomPing: function(room) {
-    let id = this.socket.id;
-    this.onlineRoom.roomPing(room, id);
-    let player = {
-      id,
-      x: GAME.grid.player.position.x,
-      y: GAME.grid.player.position.y,
-      z: GAME.grid.player.position.z,
-      direction: GAME.grid.player.direction,
-    };
-    this.socket.emit('player-move', player)
   },
 
   onMapWon: function () {
     GAME.grid.aiManager.mapWon = true;
   },
 
+  onRoomSync: function (room) {
+    GAME.onlineManager.roomSync(room)
+  },
+
   // Events
+  playerMove: function() {
+    let id = this.socket.id;
+    let client = {
+      id,
+      x: GAME.grid.player.position.x,
+      y: GAME.grid.player.position.y,
+      z: GAME.grid.player.position.z,
+      direction: GAME.grid.player.direction,
+    };
+    this.socket.emit('player-move', { client })
+  },
+
   joinRoom: function(room) {
     GS.Game.onlinePlay = true;
     this.socket.emit('join-room', { roomName: GS.Settings.roomName })
   },
 
-  roomPing: function() {
-    this.socket.emit('room-ping', { roomName: GS.Settings.roomName })
+  roomSync: function() {
+    this.socket.emit('room-sync', { roomName: GS.Settings.roomName })
+  },
+
+  requestSetup: function() {
+    this.socket.emit('setup-grid', {});
   },
 
   getRooms: function(room) {

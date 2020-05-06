@@ -85,24 +85,40 @@ io.on('connection', function (socket) {
     socket.broadcast.emit('player-join', client);
 	})
 
-	socket.on('get-rooms', function (data) {
-		socket.emit('get-rooms', { rooms: Object.keys(rooms) });
-	})
 
-  socket.on('room-ping', function() {
-    let roomData = getClientRoomData(socket.id);
-    socket.emit('room-ping', roomData);
+  socket.on('get-rooms', function (data) {
+    socket.emit('get-rooms', { rooms: Object.keys(rooms) });
   })
 
-  socket.on('player-move', function(client) {
-    // if ([client.x, client.y, client.z, client.direction].indexOf(undefined) != -1) {
-      let current_client = getClientFromRoom(socket.id);
-      current_client.x = client.x;
-      current_client.y = client.y;
-      current_client.z = client.z;
-      current_client.direction = client.direction;
-    // }
+	socket.on('setup-grid', function () {
+    let roomData = getClientRoomData(socket.id);
+    console.dir('roomData')
+    console.dir(roomData)
+    socket.emit('setup-grid', roomData);
+	})
 
+  socket.on('room-sync', function() {
+    let roomData = getClientRoomData(socket.id);
+    socket.emit('room-sync', roomData);
+  })
+
+  socket.on('player-move', function(data) {
+    let client = data.client;
+    let current_client = getClientFromRoom(socket.id);
+    let oldPos = {
+      x: current_client.x,
+      y: current_client.y,
+      z: current_client.z
+    };
+    current_client.x = client.x;
+    current_client.y = client.y;
+    current_client.z = client.z;
+    current_client.direction = client.direction;
+
+    let moveData = {
+      client: current_client,
+    };
+    socket.broadcast.emit('player-move', moveData);
   })
 
   socket.on('player-shoot', function() {

@@ -430,9 +430,12 @@ GS.Player.prototype = GS.inherit(GS.GridObject, {
 	},
 
 	moveStart: function() {
+    this.onlineMoveThrottled = _.throttle(() => GAME.onlineManager.playerMove(), 200, { leading: true });
 	},
 
 	moveEnd: function() {
+    this.onlineMoveThrottled.cancel
+    delete this.onlineMoveThrottled
 	},
 
 	updateCollisionData: function(newPos) {
@@ -453,6 +456,10 @@ GS.Player.prototype = GS.inherit(GS.GridObject, {
 		if (!this.moving && oldMoving) {
 			this.moveEnd();
 		}
+
+    if (this.onlineMoveThrottled) {
+      this.onlineMoveThrottled();
+    }
 
 		this.updateBoundingBox();
 	},

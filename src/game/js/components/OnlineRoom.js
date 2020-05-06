@@ -12,26 +12,25 @@ GS.OnlineRoom.prototype = {
     GAME.loadOnlineLevel(mapName);
   },
 
-  setupClients: function () {
-    if (!this.firstRunHack)
-      this.room.clients.forEach((e) => this.addClient(e));
-    this.firstRunHack = true;
+  setupClients: function (room) {
+    clients = room.clients || this.room.clients
+    clients.forEach((e) => this.addClient(e));
   },
 
-  roomPing: function (room, id) {
-    for (i in room.clients) {
-      updatedClient = room.clients[i];
-      console.log(updatedClient.id + ": " + updatedClient.score)
-      if (updatedClient.id === id) {
-        continue;
-      }
-      let client = this.findClient(updatedClient.id);
-      if (!client) {
-        // this.addClient(updatedClient);
-      } else {
-        this.updateClient(updatedClient);
-      }
-    }
+  roomSync: function (room, id) {
+    // for (i in room.clients) {
+    //   updatedClient = room.clients[i];
+    //   console.log(updatedClient.id + ": " + updatedClient.score)
+    //   if (updatedClient.id === id) {
+    //     continue;
+    //   }
+    //   let client = this.findClient(updatedClient.id);
+    //   if (!client) {
+    //     // this.addClient(updatedClient);
+    //   } else {
+    //     this.updateClient(updatedClient);
+    //   }
+    // }
   },
 
   addClient: function (client) {
@@ -91,9 +90,18 @@ GS.OnlineRoom.prototype = {
     this.clients = [];
   },
 
-  updateClient: function (updatedClient) {
-    let client = this.findClient(updatedClient.id);
-    client.onUpdateMove(client);
+  updateClient: function (c, newPos) {
+    let client = this.findClient(c.id);
+    if (!client) {
+      return
+    }
+    // if (this.script !== undefined) {
+    //   this.checkZones(data.client,
+    // }
+
+		// this.wakeUpNearbyMonsters(player);
+		// this.applyRegionVisibility(player);
+    client.onUpdateMove(client, newPos);
   }
 };
 
