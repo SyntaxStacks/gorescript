@@ -16,6 +16,8 @@ gulp.task("js-vendor", function () {
 			"./src/deps/OBJExporter.js",
 			"./src/deps/OBJLoader.js",
 			"./src/deps/lodash.min.js",
+			"./src/deps/babylon.js",
+			// "./src/deps/babylon.max.js",
 
 			"./src/deps/post-processing/*.js",
 		])
